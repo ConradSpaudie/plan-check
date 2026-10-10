@@ -1,4 +1,5 @@
 import { checkAnimals, checkBio, checkComputational, checkHuman } from "./branches";
+import { checkFormsMentioned, checkReferenceCount, checkSessionLength, checkStepReferences } from "./consistency";
 import { checkDates } from "./dates";
 import { detect } from "./detect";
 import { formsNeeded, signatureSteps } from "./forms";
@@ -39,10 +40,22 @@ const GROUP_RANK: Record<GroupId, number> = {
   computational: 11,
 };
 
+/**
+ * Text to scan for what the project involves. The rationale describes other people's studies
+ * (universities, participants, mice), so it is left out when the plan has a procedure section.
+ */
+function triggerText(parsed: ReturnType<typeof parsePlan>, plan: string): string {
+  const body = parsed.body || plan || "";
+  const hasProcedure = parsed.info.find((i) => i.id === "procedure")?.hasHeading;
+  const rationale = parsed.sections.rationale;
+  if (hasProcedure && rationale && body.includes(rationale)) return body.replace(rationale, "");
+  return body;
+}
+
 /** What the plan mentions, for the UI to auto-tick the profile. */
 export function detectFromPlan(plan: string) {
   const parsed = parsePlan(plan ?? "");
-  return detect(parsed.body || plan || "");
+  return detect(triggerText(parsed, plan ?? ""));
 }
 
 export function sortFindings(list: Finding[]): Finding[] {
@@ -58,7 +71,7 @@ export function runChecks(input: CheckInput): Report {
   const plan = input.plan ?? "";
   const parsed = parsePlan(plan);
   const wordCount = words(plan);
-  const detected = detect(parsed.body || plan);
+  const detected = detect(triggerText(parsed, plan));
   const today = input.today ?? new Date().toISOString().slice(0, 10);
   const withToday: CheckInput = { ...input, today };
 
@@ -76,6 +89,10 @@ export function runChecks(input: CheckInput): Report {
     checkBio(parsed, detected, input.profile),
     checkComputational(parsed, detected, input.profile),
     checkAI(parsed, detected, input.profile),
+    checkStepReferences(parsed),
+    checkReferenceCount(parsed),
+    checkFormsMentioned(plan, input.profile),
+    checkSessionLength(parsed),
   ];
 
   const findings = sortFindings(outs.flatMap((o) => o.findings));

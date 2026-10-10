@@ -141,7 +141,7 @@ const CONTROL =
   /\b(control (group|condition|sample|variable|treatment|trial)s?|controls?|placebo|baseline|negative control|positive control|held constant|kept constant|remain(s)? constant|constant variables?|independent variable|dependent variable|untreated|blank|0\s?%|(the )?same (amount|type|size|temperature|conditions?|volume|light|soil|time))\b/i;
 
 const LOCATION =
-  /\b(at (home|school|the lab|my school|the university|a lab|my house)|in (my|the|a) (garage|kitchen|classroom|lab|laboratory|bedroom|home|school|basement|workshop|field)|located|location|on campus)\b/i;
+  /\b(at (home|school|the lab|my school|the university|a lab|my house)|in (my|the|a) (garage|kitchen|classroom|lab|laboratory|bedroom|home|school|basement|workshop|field)|located|location|on campus|at the school|(a |the )?(quiet |same |consistent )?room (provided|at|in)|quiet room)\b/i;
 
 const PASSIVE = /\b(is|are|was|were|will be|be|been|being)\s+(?!not\b)[a-z]+(ed|en)\b/i;
 const ACTOR = /\b(i|we|my|our|student|researcher|supervisor|mentor|adult|sponsor|teacher|parent)\b/i;
@@ -246,7 +246,7 @@ export function checkProcedure(parsed: Parsed): Out {
 
   // D6: results language in a plan
   const resultsRe =
-    /\b(results (showed|show|indicate|indicated|demonstrate|demonstrated)|the data (showed|show|shows)|i found that|we found that|it was found that|was found to|in conclusion|my results|our results|my conclusion)\b/i;
+    /\b(results (showed|show|indicate|indicated|demonstrate|demonstrated)|the data (showed|show|shows)|i found that|we found that|it was found that|was found to|in conclusion|(my|our) results (showed|show|indicate|indicated|demonstrate|demonstrated|were|confirm\w*)|my conclusion)\b/i;
   const resultSents = sentences(parsed.body).filter((s) => has(resultsRe, s));
   if (resultSents.length > 0) {
     findings.push({
@@ -721,7 +721,7 @@ export function checkAI(parsed: Parsed, det: Detections, profile: Profile): Out 
   const findings: Finding[] = [];
   const passes: PassItem[] = [];
   const text = parsed.sections.ack + "\n" + parsed.body;
-  const statement = /\b(ai (was|were) used|i used (chatgpt|claude|gemini|copilot|an? ai)|prompt log|generative ai|ai[- ]use (statement|log)|ai tool)/i;
+  const statement = /\b(ai (coding )?assistance|ai-assisted|with (the )?(help|assistance) of (ai|chatgpt|claude)|built with ai|ai (was|were) used|i used (chatgpt|claude|gemini|copilot|an? ai)|prompt log|generative ai|ai[- ]use (statement|log)|ai tool)/i;
 
   if (profile.usesAI && !has(statement, text)) {
     findings.push({

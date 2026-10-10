@@ -16,7 +16,7 @@ const ITEMS: Item[] = [
   { key: "hazards", label: "Hazardous chemicals or devices", hint: "Acids, flames, lasers, high voltage", detect: "hazards" },
   { key: "outsideSite", label: "Work at an outside lab", hint: "University, hospital, company", detect: "outsideSite" },
   { key: "continuation", label: "Builds on earlier work", hint: "A continuation of a past project", detect: "continuation" },
-  { key: "team", label: "Team project", hint: "More than one student" },
+  { key: "team", label: "Team project", hint: "More than one student", detect: "team" },
   { key: "usesAI", label: "I used an AI tool", hint: "For any part of the project", detect: "aiUsed" },
 ];
 

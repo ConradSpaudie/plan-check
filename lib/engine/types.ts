@@ -122,6 +122,7 @@ export interface Detections {
   dataset: Hit[];
   identifiers: Hit[];
   aiUsed: Hit[];
+  team: Hit[];
 }
 
 export interface FormNeed {

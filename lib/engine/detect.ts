@@ -19,7 +19,7 @@ const HAZARDS =
   /\b(acids?|hydrochloric|sulfuric|nitric|acetic|sodium hydroxide|lye|bleach|ammonia|chlorine|peroxide|solvents?|acetone|ethanol|isopropyl|methanol|formaldehyde|flammable|flames?|burners?|bunsen|hot plates?|boiling|soldering|solder|lasers?|uv light|ultraviolet|radiation|x-rays?|high voltage|mains|lithium|li-ion|batter(y|ies)|explosives?|rockets?|fireworks|firearms?|drones?|chainsaw|power tools?|knife|scalpel|blades?|centrifuge|autoclave|pesticides?|herbicides?|fertili[sz]ers?|heavy metals?|copper sulfate|cuso4|lead nitrate|mercury|arsenic|carcinogens?|toxic|nanoparticles?|3d printer|dry ice|liquid nitrogen)\b/i;
 
 const OUTSIDE_WORDS =
-  /\b(university|college lab|laborator(y|ies) at|lab at|hospital|medical center|research institute|research institution|national laborator(y|ies)|industrial setting|company'?s lab|mentor'?s lab|berkeley lab|lawrence berkeley)\b/i;
+  /\b((at|in) (a |the |my mentor'?s )?[\w'. -]{0,40}?university|university (lab|laborator(y|ies)|campus)|college lab|laborator(y|ies) at|lab at|hospital|medical center|research institute|research institution|national laborator(y|ies)|industrial setting|company'?s lab|mentor'?s lab|berkeley lab|lawrence berkeley)\b/i;
 // Acronyms are case sensitive so "uc" in other words never matches.
 const OUTSIDE_ACRONYMS = /\b(NASA|LBNL|SLAC|CERN|Fermilab|UCSF|UCLA|UCSD|MIT|Caltech|NIH|CDC|UC (Berkeley|Davis|Santa Cruz|Merced|Irvine|Riverside|San Diego|Santa Barbara))\b/;
 
@@ -39,7 +39,12 @@ const IDENTIFIERS =
   /\b(patients?|medical records?|health records?|faces?|facial|photos? of (people|students)|names?|emails?|usernames?|social media posts?|tweets?|biometric|voice recordings?)\b/i;
 
 const AI_USED =
-  /\b(i used (chatgpt|claude|gemini|copilot|perplexity|an? ai)|ai (was|were) used|used (chatgpt|claude|gemini|copilot|perplexity)|with the help of (chatgpt|claude|gemini|copilot|ai)|generated (by|with|using) (chatgpt|claude|gemini|copilot|ai)|prompt log)\b/i;
+  /\b(ai coding assistance|with ai (coding )?assistance|built with (the help of )?ai|ai-assisted|(using|used) (chatgpt|claude|copilot|cursor|gemini)|i used (chatgpt|claude|gemini|copilot|perplexity|an? ai)|ai (was|were) used|used (chatgpt|claude|gemini|copilot|perplexity)|with the help of (chatgpt|claude|gemini|copilot|ai)|generated (by|with|using) (chatgpt|claude|gemini|copilot|ai)|prompt log)\b/i;
+
+const TEAM =
+  /\b(team project|teammates?|co-?researchers?|co-?built|my (research )?partner|team captain|student researchers?\(s\))\b/i;
+/** A byline with two or more student names, e.g. "Conrad Spaudie, Michael Brandt, Sep 24 2026". */
+const BYLINE = /^\s*[A-Z][a-z]+ [A-Z][a-z'-]+(?:,| and| &) [A-Z][a-z]+ [A-Z][a-z'-]+\b/m;
 
 const NEGATION = /\b(no|not|n't|without|never|none|nor|neither|free of|free from|avoid(s|ing)?|instead of)\b/i;
 
@@ -66,6 +71,14 @@ function hits(re: RegExp, all: string[], limit = 4, allowNegated = false): Hit[]
   return out;
 }
 
+function teamHits(body: string, all: string[]): Hit[] {
+  const out = hits(TEAM, all, 2);
+  const head = body.slice(0, 400);
+  const m = BYLINE.exec(head);
+  if (m) out.unshift({ term: "two authors", sentence: head.slice(m.index).split(/\n/)[0].trim() });
+  return out.slice(0, 2);
+}
+
 export function detect(body: string): Detections {
   const all = sentences(body);
   const outside = unique([
@@ -84,6 +97,7 @@ export function detect(body: string): Detections {
     dataset: hits(DATASET, all, 2),
     identifiers: hits(IDENTIFIERS, all, 3),
     aiUsed: hits(AI_USED, all, 2),
+    team: teamHits(body, all),
   };
 }
 
@@ -97,6 +111,7 @@ export function suggestProfile(d: Detections): Partial<Profile> {
     outsideSite: d.outsideSite.length > 0,
     continuation: d.continuation.length > 0,
     usesAI: d.aiUsed.length > 0,
+    team: d.team.length > 0,
   };
 }
 

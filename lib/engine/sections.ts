@@ -35,7 +35,7 @@ export const SECTION_DEFS: SectionDef[] = [
   {
     id: "procedure",
     label: "Procedure",
-    head: /(procedures?|methods?|methodology|experimental design|design process|protocol|experimental procedure|steps)/i,
+    head: /(procedures?|methods?|methodology|variables|experimental design|design process|protocol|experimental procedure|steps)/i,
     kw: /\b(step \d|first,|next,|then,|finally,|procedure|i will (measure|record|test|collect|build|run|mix|add)|we will (measure|record|test|collect|build|run|mix|add))\b/i,
     minWords: 80,
   },
@@ -111,7 +111,7 @@ function matchDefs(candidate: string): SectionId[] {
 }
 
 /** Return the section ids if this line is a heading, plus any text that follows on the same line. */
-function headingOf(line: string): { ids: SectionId[]; rest: string } | null {
+export function headingOf(line: string): { ids: SectionId[]; rest: string } | null {
   const raw = line.trim();
   if (!raw) return null;
   const clean = stripHeading(raw).replace(/\*\*/g, "");
@@ -119,7 +119,11 @@ function headingOf(line: string): { ids: SectionId[]; rest: string } | null {
   const inline = clean.match(/^([A-Za-z][A-Za-z &/,-]{2,50}?)\s*:\s+(\S.*)$/) ??
     (raw.length <= 110 ? clean.match(/^([A-Za-z][A-Za-z &/,-]{2,50}?)\s*[\u2013\u2014-]\s+(\S.*)$/) : null);
   if (!inline && raw.length > 110) return null;
-  const candidate = inline ? inline[1] : clean.replace(/[:.]\s*$/, "");
+  // "BIBLIOGRAPHY (separate piece of paper)" and "Human Participants Addendum" are still headings.
+  const candidate = (inline ? inline[1] : clean.replace(/[:.]\s*$/, ""))
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .replace(/\s+addendum$/i, "")
+    .trim();
   if (words(candidate) > 8) return null;
   const ids = matchDefs(candidate);
   if (ids.length === 0) return null;
@@ -159,8 +163,14 @@ export function parsePlan(plan: string): Parsed {
   const sections = {} as Record<SectionId, string>;
   for (const def of SECTION_DEFS) sections[def.id] = acc[def.id].join("\n").trim();
 
-  const bibStart = lines.findIndex((l) => headingOf(l)?.ids.includes("bibliography"));
-  const bodyLines = bibStart >= 0 ? lines.slice(0, bibStart) : lines;
+  // Body is everything except the bibliography, so an addendum after the references still counts.
+  const bodyLines: string[] = [];
+  let inBib = false;
+  for (const line of lines) {
+    const h = headingOf(line);
+    if (h) inBib = h.ids.includes("bibliography");
+    if (!inBib) bodyLines.push(line);
+  }
   const body = bodyLines.join("\n").trim();
 
   const info: SectionInfo[] = SECTION_DEFS.map((def) => {

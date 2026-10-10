@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { STRONG_SAMPLE, WEAK_SAMPLE } from "../samples";
 import { checkDates, plusYear } from "./dates";
-import { detect, emptyProfile, runChecks, suggestProfile } from "./index";
+import { detect, detectFromPlan, emptyProfile, runChecks, suggestProfile } from "./index";
 import { bibEntries } from "./plan";
 import { parsePlan } from "./sections";
 import type { FormDates, Profile } from "./types";
@@ -284,5 +284,76 @@ describe("lessons from real public sample plans", () => {
 
   it("does not tick biological agents for a passing mention of human tissue", () => {
     expect(suggestProfile(detect("Fire can damage human tissue in seconds.")).phba).toBe(false);
+  });
+});
+
+describe("lessons from a real human-participants plan", () => {
+  it("reads '8) BIBLIOGRAPHY (SEPARATE PIECE OF PAPER)' and a VARIABLES heading", () => {
+    const p = parsePlan("3) VARIABLES\nIndependent variable: the tutor.\n8)  BIBLIOGRAPHY(SEPARATE PIECE OF PAPER)\nBloom, B. S. (1984). The 2 sigma problem.");
+    expect(p.info.find((i) => i.id === "procedure")!.hasHeading).toBe(true);
+    expect(p.info.find((i) => i.id === "bibliography")!.hasHeading).toBe(true);
+  });
+
+  it("keeps an addendum after the bibliography in the body", () => {
+    const p = parsePlan("Procedure\nDo it.\nBibliography\nA. (2020). T.\nHuman Participants Addendum\nBenefits: free tutoring.");
+    expect(p.body).toContain("Benefits");
+    expect(p.body).not.toContain("A. (2020)");
+  });
+
+  it("does not treat a cited university or a dataset supplier as an outside lab", () => {
+    const plan = "Rationale\nIn 2025, University of Delaware's Center ran a trial.\nProcedure\nWe use DIBELS 8 (University of Oregon, free download) in a quiet room at the school.";
+    expect(suggestProfile(detectFromPlan(plan)).outsideSite).toBe(false);
+    expect(suggestProfile(detectFromPlan("Procedure\nI will run the samples at the university lab.")).outsideSite).toBe(true);
+  });
+
+  it("does not read 'how far our results generalize' or 'no reading advice will be given' as problems", () => {
+    const r = runChecks({
+      plan: "Procedure\nThis limits how far our results generalize. No individual results or reading advice will be given to parents. Children with a diagnosed speech impairment are not eligible.",
+      profile: { ...emptyProfile, humans: true },
+      dates: {},
+      today: TODAY,
+    });
+    expect(r.findings.some((f) => f.id === "D6" || f.id === "E3")).toBe(false);
+  });
+
+  it("counts 'built with AI coding assistance' as an AI-use statement", () => {
+    const r = runChecks({ plan: "Procedure\nThe tutor was built with AI coding assistance.", profile: { ...emptyProfile, usesAI: true }, dates: {}, today: TODAY });
+    expect(r.findings.some((f) => f.id === "D2")).toBe(false);
+  });
+});
+
+describe("consistency checks", () => {
+  const run = (plan: string, profile = emptyProfile) => runChecks({ plan, profile, dates: {}, today: TODAY });
+
+  it("flags references to steps that are not numbered", () => {
+    const r = run("Procedure\n1. Set up.\n2. Probe.\nSteps 4-6 repeat for each child. See step 9.");
+    const f = r.findings.find((x) => x.id === "D9" && /steps? 4-6, 9/.test(x.title));
+    expect(f).toBeTruthy();
+  });
+
+  it("does not flag step references that exist", () => {
+    const r = run("Procedure\n1. Set up.\n2. Probe.\n3. Repeat steps 1-2.");
+    expect(r.findings.some((x) => x.id === "D9" && /refers to/.test(x.title))).toBe(false);
+  });
+
+  it("flags a stated reference count that does not match", () => {
+    const r = run("Procedure\nSee the 3 references below.\nBibliography\nA, B. (2020). One.\nC, D. (2021). Two.");
+    expect(r.findings.some((x) => x.title === "The plan says 3 references, but the bibliography has 2")).toBe(true);
+  });
+
+  it("flags a form the profile does not need", () => {
+    const r = run("Procedure\nMy grandmother is the designated supervisor on Form 3.", { ...emptyProfile, humans: true });
+    expect(r.findings.some((x) => x.id === "A6" && x.title.includes("Form 3"))).toBe(true);
+  });
+
+  it("flags sessions longer than their time slots", () => {
+    const r = run("Procedure\nChildren arrive in a staggered 30 minute slot.\nEach session is 15 to 40 minutes.");
+    expect(r.findings.some((x) => x.title === "Sessions can run 40 minutes, but the time slots are 30 minutes")).toBe(true);
+  });
+
+  it("detects a two-author byline and AI coding assistance", () => {
+    const d = detectFromPlan("My Project Title\nConrad Spaudie, Michael Brandt, Sep 24 2026\nProcedure\nThe app was built with AI coding assistance.");
+    expect(suggestProfile(d).team).toBe(true);
+    expect(suggestProfile(d).usesAI).toBe(true);
   });
 });

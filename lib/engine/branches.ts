@@ -96,8 +96,10 @@ export function checkHuman(parsed: Parsed, det: Detections, profile: Profile): O
   }
 
   // E3: advice and results back to participants (2027 change, from a regional summary)
-  const adviceRe = /\b(advice|diagnos\w*|medical (information|advice)|treatment|give (participants|them) (their )?(results|data|feedback|scores?)|share (the )?(results|data) with participants|tell participants (their|the) (results|scores?))\b/i;
-  const adviceSents = sentences(text).filter((s) => has(adviceRe, s));
+  const adviceRe = /\b((medical|reading|health|personal) advice|give (them |participants )?advice|diagnostic (information|results|feedback)|give (them |participants )?a diagnosis|medical (information|advice)|give (participants|them) (their )?(results|data|feedback|scores?)|share (the )?(results|data) with participants|tell participants (their|the) (results|scores?))\b/i;
+  const adviceSents = sentences(text).filter(
+    (s) => has(adviceRe, s) && !/\b(no|not|never|won't|will not|none)\b/i.test(s),
+  );
   if (adviceSents.length > 0) {
     findings.push({
       id: "E3",
