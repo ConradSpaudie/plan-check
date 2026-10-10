@@ -1,0 +1,41 @@
+Research Plan Sample 3
+
+Rationale: Research has shown that using hand sanitizer is not effective after three uses. Does the effectiveness of hand sanitizer work after every trial?
+
+Hypothesis: I believe if hand sanitizer is used so many times it won't be killing anymore cultures.
+
+Procedures:
+
+1. Gather all materials. (Petri dishes, prepared nutrient agar, latex gloves, marker, sterile cotton swabs, brown paper bags.)
+2. Prepare nutrient agar according by melting prepared agar in a beaker of boiling water.
+3. Prepare 8 petri dishes with nutrient agar.
+4. Label the petri dishes in the following titles:
+5. Left Hand 8:00 AM
+6. Right Hand 8:00 AM
+7. Left Hand 10:48 AM
+8. Right Hand 10:48 AM
+9. Left Hand 12:10 PM
+10. Right Hand 12:10 PM
+11. Left Hand 1:26 PM
+12. Right Hand 1:26 PM
+13. Left Hand 2:50 PM
+14. Right Hand 2:50 PM
+15. The following morning, label 1 latex glove "left hand" & label 1 latex glove "right hand."
+16. Put gloves on appropriate hands beginning at 8:00 AM.
+17. Swab the left hand glove by rolling a clean cotton swab on the glove and swiping onto the gelled agar in the petri dish labeled with the appropriate hand and time.
+18. Repeat steps 7 with the right hand.
+19. Continue wearing gloves throughout the day, removing only before using the restroom or eating. Place gloves into labeled brown paper bags while using the restroom and eating.
+20. Swab each hand by using the procedure in step 7-8 at the times mentioned in step 4 labeled on the petri dishes.
+21. Incubate petri dishes at 37 degrees Celsius.
+22. Count the growing colonies daily and record data for 7 days.
+23. Analyze data.
+
+Risk and Safety: Possible risk is someone could get hand sanitizer in their eyes or in their mouth. Student will prepare agar under supervision of qualified scientist. Petri Dishes need to be kept away from students and in an area that will not be disturbed. Petri Dishes will be incubated in qualified scientist back storage room, which is off limits to all individuals except the researcher and qualified scientist. Caution will be taken to not open the petri dishes once they are swabbed. Petri Dishes will be heated to kill any bacteria before disposal at the conclusion of data collection.
+
+Data Analysis: Colonies will be observed and counted daily. Appropriate statistical analysis will be used to further investigate the data.
+
+Bibliography:
+
+Potentially hazardous biological agents research:
+
+This researcher worked with the qualified scientist to determine that bacteria is classified as BSL-1. Bacteria, if any, will be collected from the transfer of bacteria from floor to tested item. The most common types of household bacteria are: Micrococcus, Staphylococcus, Bacillus, and Pseudomonas. Petri dishes will remain in qualified scientists storage room at all times. The researcher and qualified scientist will be the only individuals with access to this room. Petri dishes will remain closed immediately after swabbing. Petri dishes will be autoclaved before disposal to kill any remaining bacteria.

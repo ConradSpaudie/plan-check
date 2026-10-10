@@ -1,0 +1,121 @@
+Jane Doe 11 th grade Douglas County High School
+
+Purpose/Research Question
+
+The purpose of the project is to synthesize and evaluate various types of bio-char to determine their adsorption efficiency using visual, spectroscopic and microscopic analysis.
+
+The research question for this project is "Which type of bio-char is the most efficient adsorbent for removing pollutants from waste water?"
+
+Hypothesis
+
+If the chemical environment (independent variable) of the bio-char and wastewater solution favors formation of a chelated complex, then it will result in the most efficient bio
+
+adsorption (dependent variable).
+
+Procedures, Calculations and Data Analysis
+
+A) Preparation of aqueous waste solutions.
+
+a. Weigh 1 g of CuSO4 using a digital balance.
+
+b. Transfer the weighed CuSO4 into a 1 L volumetric flask and add water to fill to
+
+the 1 L mark.
+
+c. Use a magnetic stir bar and stir plate to completely dissolve the salt in water.
+
+d. Measure pH and temperature of the resulting solution.
+
+B) Bio-adsorbent study with various nut shells a. Measure 100 mL of the CuSO4 solution using a 100 mL graduated cylinder.
+
+b. Weigh measured amount of selected nut (raw peanut, roasted peanut, pistachio,
+
+pecan, chestnut). (Figure 9)
+
+c. Transfer weighed amount of nut and measured volume of CuSO4 solution into a
+
+250 mL beaker.
+
+d. Cover the beaker with a plastic sandwich bag.
+
+e. Use a plastic pipet to collect liquid samples for spectrometric analysis and tweezers to collect nut shells for microscopic analysis.
+
+C) Colorimetric study of solution to evaluate various bio-char as bio-adsorbent.
+
+a. Connect Vernier colorimeter to Lab Quest data acquisition unit, turn on the power
+
+and warm-up instrument for 5 minutes.
+
+b. Fill the cuvette ¾ with distilled water and calibrate to read 0.00 for blank at the
+
+maximum wavelength (max).
+
+c. Fill the cuvette ¾ with the sample solution and place in the colorimeter to read
+
+absorbance of the solution.
+
+D) Scanning electron microscopy (SEM) of various bio-char as bio-adsorbent a. Clean a Aluminum stub with alcohol and apply a double sided carbon tape.
+
+b. Place the bio-char on the carbon taped aluminum stub and carefully insert prepared sample in the holder of a FEI Quanta 200 SEM with backscatter electron
+
+imaging capability.
+
+c. Set working distance (WD) to 10 mm, voltage (HV) to 20 kV and magnification
+
+to 30X.
+
+d. Acquire image of the samples using a Bruker energy dispersing spectrometer.
+
+e. Use the Espirit software to analyze spectra to identify identity and location of
+
+elemental composition.
+
+Calculations
+
+% change in absorbance = {(Day 7 absorbance – Day 1 absorbance)/Day 1 absorbance}*100
+
+Bibliography
+
+Annadurai G, Juang R (2002) "Use of cellulose-based wastes for adsorption of dyes from aqueous solutions," J. Haz Mat., 92, 3, pp. 263 – 274.
+
+Bailey SE, Olin TJ, Bricka RM, Adrian DD (1999) "A review of potentially low-cost sorbents for heavy metals," Wat. Res. 33, pp. 2469-2479.
+
+Brewer GJ (2010) "Copper toxicity in the general population," Clin. Neurophysiol., vol. 121, pp. 459-60
+
+Flemming CA and Trevors JT (1989) "Copper toxicity and chemistry in the environment: a review," Water, Air, & Soil Pollution., vol. 44, pp. 143-158.
+
+Gaballah I, Goy D, Allain E, Kilbertus G, Thauront J (1997) "Recovery of copper through decontamination of synthetic solutions using modified barks," Met. Metall. Trans. B 28, 13–23.
+
+Khormaei M, Nasernejad B, Edrisi M, Eslamzadeh T (2007) "Copper biosorption from aqueous solutions by sour orange reside," J. Hazardous Mater., 149, 269-274.
+
+King JC, Blumberg J, Ingwersen L, Jenab M, Tucker KL (2008) "Tree nuts and peanuts as components of a healthy diet," J. Nutr., 138:1736–1740.
+
+Kurniawan TA, Chan GYS, LoW, Babel S (2006) "Comparison of low-cost adsorbents for treating wastewaters laden with heavy metals," Science of total environment, 366, 409-426.
+
+Nakajima A, Sakaguchi T (1990), "Recovery and removal of uranium by using plant wastes," Biomass 21, 55–63.
+
+Oliveira FD, Paula JH, Freitas OM, Figueiredo SA (2009) "Copper and lead removal by peanut hulls: Equilibrium and kinetic studies," Desalination, 248, 931–940.
+
+Schaeffer K (2012) "The activated carbon market 2012 supply and pricing update," Water Conditioning and Purification.
+
+Susanta S (2010) "Turning peanut waste into an alternative fuel source," The Jakarta Post.
+
+US Food and Drug Administration. Qualified Health Claims, Letter of Enforcement Discretion – Nuts and Coronary Heart Disease. US Food & Drug Administration; Rockville, MD, USA: Jul 14, 2003. pp. 1–4.
+
+Wan Ngah WS, Hanafiah MAKM (2007) "Removal of heavy metal ions from wastewater by chemically modified plant wastes as adsorbents: A review," Bioresource Technology, 99, 3935 – 3948.
+
+Wang D, Xu H (2008) "Biological activity components and functionality in peanut hull," Food and Nutrition in China, 12, 23–25.
+
+Zhao X, Chen J, Du F (2012) "Potential use of peanut by-products in food processing: a review," J Food Sci Technol,49, 5, 521 – 529.
+
+Websites
+
+http://www.copper.org/resources/properties/compounds/general.html http://water.epa.gov/lawsregs/rulesregs/sdwa/lcr/lcrmr_index.cfm http://www.masterorganicchemistry.com/2010/10/06/functional-groups-organic-chemistry/ http://www.chemguide.co.uk/atoms/bonding/dative.html
+
+www.umich.edu
+
+http://www.vernier.com/products/sensors/spectrometers/visible-range/v-spec/ http://www.purdue.edu/ehps/rem/rs/sem.htm http://www.nutfruit.org/
+
+http://www.georgiaencyclopedia.org/articles/business-economy/agriculture-georgia-overview
+
+http://www.aboutpeanuts.com/ http://extension.uga.edu/agriculture/crops/peanuts/

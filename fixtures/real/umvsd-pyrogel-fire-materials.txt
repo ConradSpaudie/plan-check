@@ -1,0 +1,79 @@
+Sample Research Plan / Final Paper No. 1 Date: Student(s) Name: Thomas Chaney School & Grade: Tippecanoe High School, Grade 9
+
+Title: Pyrogel, the Future of Fire Defense (You can start with a working title and change it as project develops)
+
+Question
+What Material is best suited for use in a firefighter's jacket? (You can narrow the
+question during background research)
+Hypothesis
+The pyrogel fabric will have the lowest heat conductivity and flame resistance compared
+to the other materials. ( Do not declare a hypothesis until after you complete
+background research)
+
+Research Fires
+
+In 30 seconds or less a small flame can get out of control and turn into a house fire. It takes less than 5 minutes for the flames to spread and heat up the entire house. Heat from fires is more dangerous than the actual flames. Temperatures in a house fire can be 100 degrees at floor level and 600 degrees at eye level. This amount of heat can char and melt clothes and scorch your lungs. In some cases after a burning room is vented a flashover will occur where everything ignites at once.
+
+The science of how chemistry, heat transfer, fluid mechanics, and fire science work together to effect fire behavior is Fire Dynamics. Webster's dictionary defines fire as, "an exothermic chemical reaction that emits heat and light." Fire is quantified in heat energy, which is a type of energy categorized by the shaking of molecules. Heat energy is measured in Joules (J), Calories (1 Calorie=4.18 J), or BTU's (1 BTU =1055 J). Temperature is a measure of heat based on a scale and a reference point. It can be measured in degrees Fahrenheit or degrees Celsius. Temperature references from the national institute of standards and technology:
+
+| º C | º F | Response |
+| --- | --- | --- |
+| 37 | 98.6 | Normal human oral/body temperature |
+| 44 | 111 | Human skin begins to feel pain |
+| 48 | 118 | Human skin receives a first degree burn injury |
+| 55 | 131 | Human skin receives a second degree burn injury |
+| 62 | 140 | A phase where burned human tissue becomes numb |
+| 72 | 162 | Human skin is instantly destroyed |
+| 100 | 212 | Water boils and produces steam |
+| 140 | 284 | Glass transition temperature of polycarbonate |
+| 230 | 446 | Melting temperature of polycarbonate |
+| 250 | 482 | Charring of natural cotton begins |
+| >300 | >572 | Charring of modern protective clothing fabrics begins |
+| >600 | >1112 | Temperatures inside a post-flashover room fire |
+
+Heat transfer is how the heat from a fire moves. As the second law of thermodynamics state, hot moves towards cold. There are three ways it accomplishes this. Conduction is the transfer of heat within solids or between touching solids for example a pot being heated up on a stovetop. Convection is heat transfer by the movement of liquids or gasses. And finally Radiation is heat moving by electromagnetic waves which in most cases is light.
+
+Firefighter's Injuries
+About 100 firefighters are killed each year and tens of thousands are injured. A large
+numbers of these injuries unsurprisingly are burns and might be prevented through better
+protective equipment. Right now Firefighters PPE or personal protective equipment consists of
+their turnout gear and SCBA (self-contained breathing apparatus). Their turnout gear which
+protects their body from the fire is made up of 3 layers. First is the Kevlar/ Nomex outer layer for
+direct flame protection, the vapor barrier to prevent steam burns, and the in thermal barrier
+insulates the firefighter from the heat of the fire.
+
+Procedures
+
+Heat Test 1. Cut material into a 12.7 cm by 12.7 cm square and 0.508 cm thick. 2. Place first material centered on the testing door window and bolt on the other side snug. 3. Put both thermocouples into a cup of water and note the temperature difference if any. 4. Attach thermocouples to both sides of the material. 5. Place test door in the open toaster over and set the toaster oven to 232 Degrees Celsius. 6. Turn on oven and record outside and inside temperature every 15 seconds for 3 minutes, 30 seconds and any observations. 7. Turn off oven remove door and turn on fan to cool. 8. Wait until the oven reaches room temperature and repeat 5 times for each material.
+
+Flame test 1. Use Already cut material and place onto burn apparatus 2. Attach Thermocouple to outside of material and record initial temp. 3. Fill metal dish with 1 ml of 91% isopropyl alcohol 4. Place metal dish between the lines 5. Light the dish of alcohol and start timer 6. Record observations and temperature every 10 seconds for 50 seconds 7. Repeat 3 times for each material
+
+Materials
+
+• 2 voltmeters
+• 2 thermocouples
+• 1 toaster oven
+• Heat test apparatus
+• Flame test apparatus
+• 91% isopropyl alcohol
+• Small metal dish
+• lighter
+• Fire extinguisher
+• Safety goggles
+• Timer
+• Fiberglass insulation
+• Rock Wool insulation
+• Pyrogel
+• Aerogel
+• Fire suit insulation material
+
+Works Cited
+
+"Firefighter burn injuries: predictable patterns influenced by turnout gear." PubMed.
+N.p., 18 Jan 2012. Web. 10 Feb 2013..
+"Home Fires." Ready. Federal Emergency Management Agency, 26 Sept 2012. Web. 10
+Feb 2013.
+Madrzykowski, Dan. "Fire Behavior." Fire.gov. National Institute of Standards and
+Technology, 15 Oct 2010. Web. 10 Feb 2013..
+"National Fire Incident Reporting System." USFA. U.S. Fire Administration, 05 Sept
+2012. Web. 10 Feb 2013..

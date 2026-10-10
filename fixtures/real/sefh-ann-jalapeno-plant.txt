@@ -1,0 +1,75 @@
+Ann's Research Plan for Scienteer Ann decided the best way to get her information into Scienteer was to write it out as a word document and then cut and paste it in after it had been reviewed by a parent and teacher. She went to the rules wizard on the Intel Science and Engineering Fair Site to make sure she would have all the correct forms. https://apps2.societyforscience.org/wizard/index.asp The Research Plan/Project Summary should include the following: RATIONALE: Include a brief synopsis of the background that supports your research problem and explain why this research is important and if applicable, explain any societal impact of your research. Ann's Rationale: Jalapeno peppers are a favorite for cooks to use everywhere. They are easy to grow from home. Many people that like them do not have yard space but would like to grow them in containers. This can work if the containers have a good quality of soil. One of the ways to improve soil in containers is to add a microbial soil enhancer. These can be expensive, so do you have to use the recommended amount in the container to get a good harvest of peppers?. This experiment will determine if you can use less of a soil enhancer and still get the same results. This could encourage more people to garden in containers.
+
+RESEARCH QUESTION(S), HYPOTHESIS(ES), ENGINEERING GOAL(S), EXPECTED OUTCOMES: How is this based on the rationale described above?
+
+Research Question: How will adding different concentrations of a soil
+microbial enhancer affect the production of jalapeno pepper plants?
+Hypothesis: If higher concentrations of the soil microbial enhancer are applied,
+then the plants would produce more peppers.
+Describe the following in detail:
+Procedures: Detail all procedures and experimental design including methods for data
+collection. Describe only your project. Do not include work done by mentor or others.
+Procedure:
+1. Obtain 4 flats of jalapeno pepper plants, 10 plants per flat. All the plants
+should look similar in health and size. Make sure that each flat will allow for
+growth and is the same size with the same type of soil.
+2. Place the flats in a space where they receive the same amount of sunlight,
+wind and the same temperature. They will be watered the same amount and
+on the same day. If one group dries out more then they will be given
+additional water and it will be recorded.
+3. Grow them for 5 days so they can get use to their environment.
+4. Mix up the soil enhancer with water as it says on the directions. The
+following percent's will be used-10%, 20% and 30% (the recommended
+amount).
+5. Apply the soil enhancer as follows: a) Flat 1: 0% Soil Enhancer; b) Flat 2: 10%,
+c) Flat 3: 20% Soil Enhancer; and d) Flat 4: 30% Soil Enhancer-the
+recommended amount. The applications will be made as the directions state.
+6. Make observations and record data for 60 days. Peppers will be harvested at
+10-day intervals if they ripen early.
+7. At the end of 60 days record the health of the plants (healthy/thriving), the
+quality of the peppers using a three-point scale, how many flowers and
+peppers are present.
+8. Garden gloves will be used when handling the jalapeno peppers.
+Risk and Safety: Identify any potential risks and safety precautions needed.
+Ann's Risk and Safety Evaluation.
+Ann reviewed the questions in Scienteer about her project. She found that if a
+project had microbes in it there may be special safety rules and forms that would
+need to be filled out. She went to the rules and guidelines and found out the
+type of microbes she was using were exempt from the paperwork. She was not
+culturing, or growing bacteria and it was what would be found in soil.
+
+The only safety consideration Ann had was dealing with the jalapeño peppers. She added here that she will wear gardening gloves when handling the peppers.
+
+Data Analysis: Describe the procedures you will use to analyze the data/results.
+Ann's data will be both qualitative and quantitative. She wrote the following for her
+research plan. Go to Describing Ann's Data to get details on how she came up with the
+descriptions below.
+Quantitative data: The number of peppers and when they were picked will tell if the soil
+enhancer affected pepper production. If the pepper is not intact it will not be counted.
+The number of peppers per flat in 10-day intervals will be collected along with the
+number produced by individual plants. This data will show if the soil enhancer increased
+pepper production. The measures of central tendency used will be the mean, median
+and mode value of each concentration. These calculations could be significant in the
+final data analysis. The levels of variation used will be the range and frequency.
+Qualitative data: The overall health of the plant will be an indicator if the soil enhancer
+will work. This will be done by using healthy or thriving. If a plant dies a value of 0 will be
+given. The quality of the peppers will be measured on a 1-3 scale. The soil enhancer
+should produce higher quality peppers. The following scale will be used:
+Rating Description
+Rating of 3 Green color to red color fleshy and firm
+larger size
+Rating of 2: Green color medium size firm and
+somewhat fleshy
+Rating of 1: Green color small pepper not fleshy
+Ann will use the same measures of central tendency and variation for this set of data.
+BIBLIOGRAPHY: List major references (e.g. science journal articles, books, internet
+sites) from your literature review. If you plan to  use vertebrate animals, one of
+these references must be an animal care reference.
+Ann will use the format that the teacher requires. She will have 2 plant books and 3
+internet sites.
+Links that Ann can use to help her site her project.
+APA
+https://owl.english.purdue.edu/owl/resource/560/01/
+MLA
+
+https://owl.english.purdue.edu/owl/resource/747/2/

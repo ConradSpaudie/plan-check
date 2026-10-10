@@ -1,0 +1,45 @@
+[Student name removed]
+
+Research Plan
+
+Rationale:
+
+ Many patients die because of coagulopathy, a condition in which the blood's ability to form clots is impaired. Coagulopathy usually leads to excessive bleeding, which can be fatal to a patient if continued for a long period of time. Many tests are used to evaluate blood clots in patients including the PTT, PT, and the platelet test. However, the thromboelastogram (TEG) is the preferred test for many doctors. The TEG is a test of whole blood coagulation. To use the TEG, a blood sample is collected from a patient. The blood is then entered into a cup that is inside the machine, and a pin inside the cup oscillates the blood. This eventually forms a clot, which is then measured and causes the formation of a graph on a computer screen that displays the life-span of the clot. The TEG measures the following variables: the R-value, the alpha angle, the maximum amplitude, and the LY30 value of a blood clot. The R-value is the time elapsed until the first measurable clot forms after the blood is entered into the TEG machine. The alpha angle reflects the speed of fibrin accumulation. The maximum amplitude is the highest vertical amplitude of the TEG tracing of a blood clot. The LY30 value is the percentage of amplitude reduction thirty minutes after the clot reaches its maximum amplitude. This measures the lysis, or breaking down, of the clot. These parameters are evaluated and compared to the range of a normal blood clot. If one of the parameters has a value that is too low or too high, this indicates that a doctor may need to administer a substance, such as platelets, into the patient's blood stream to help with the coagulation process. Therefore, the TEGs are very advantageous to the well-being of a patient with a severe injury. By examining the patient's TEG results, the doctor can find a better way to further their treatment. The TEG is a fairly new addition to the medical field. More research is needed to support its effectiveness in trauma and other surgical settings.
+
+Research Question: How can thromboelastography be used to determine acquired coagulation disorders in trauma patients and in patients who are taking novel oral anticoagulants?
+
+Hypothesis: Thromboelastography will detect fibrinolysis in trauma patients and in patients who are taking novel oral anticoagulants.
+
+Expected Outcomes:
+
+The TEG will be able to detect fibrinolysis and the coagulation parameters will be evaluated.
+
+Procedure:
+
+1. The student will research thromboelastography and become familiar with the coagulation process and coagulation parameters.
+
+2. The student will perform data entry of clinical and laboratory data that has already been prepared for a study involving the TEG, trauma, and the novel oral anticoagulants.
+
+3. The student will partake in the maintenance of the reagents for the TEG 5000 and the TEG 6S.
+
+4. The student will analyze TEG graphs and interpret the patterns of the results.
+
+Risk and Safety: No potential risks exist for this project because the student will not come in contact with any patients and will not receive any names or other information that could identify a patient.
+
+Data Analysis:
+
+ Clinical data will be correlated with the following TEG parameters: R, Alpha angle, Maximum Amplitude, and Lysis 30%, which are the common parameters for the TEG. R refers to the coagulation cascade. The alpha angle describes the fibrin and fibrinogen function. The maximum amplitude is the maximum clot retraction caused by the interaction of the platelets and fibrin/fibrinogen. The Lysis 30 measures the percent of lysis after the maximum amplitude of the clot. The student will evaluate the parameters of different TEG tests to see if the blood clot formed has abnormal qualities. The student will compare the measured values to the values of a normal TEG test.
+
+Bibliography:
+
+Castellino, Francis J, et al. "Traumatic brain injury causes platelet adenosine diphosphate and arachidonic acid receptor inhibition independent of hemorrhagic shock in humans and rats." National Institute of Health, May 2014.
+
+Kaufmann, Christoph R., et al. "Usefulness of Thrombelastography in Assessment of Trauma Patient Coagulation." The Journal of Trauma: Injury, Infection, and Critical Care, vol. 42, no. 4, 1997, pp. 716–722., doi:10.1097/00005373-199704000-00023.
+
+Walsh, M, et al. "Blood component therapy in trauma guided with the utilization of the perfusionist and thromboelastography." US National Library of Medicine National Institutes of Health, Sept. 2011.
+
+Walsh, Mark, et al. "Targeted Thromboelastographic (TEG) Blood Component and Pharmacologic Hemostatic Therapy in Traumatic and Acquired Coagulopathy." 15 Dec. 2015.
+
+Walsh, M., Jabara, M., & Miller, A. (2014, March). Thromboelastographic Goal-Directed Blood Component Therapy for Severe Hemorrhage [PDF]. South Bend: Scientific Publications Committee.
+
+Wohlauer, Max V, et al. "Early Platelet Dysfunction: An Unrecognized Role in the Acute Coagulopathy of Trauma." National Institute of Health, May 2012.
