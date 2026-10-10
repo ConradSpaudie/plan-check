@@ -9,6 +9,7 @@ import { ReportView } from "@/components/ReportView";
 import {
   detectFromPlan,
   emptyProfile,
+  planDatesOf,
   runChecks,
   suggestProfile,
   type FormDates,
@@ -30,6 +31,8 @@ export function PlanCheckApp() {
   const [touched, setTouched] = useState<Set<keyof Profile>>(new Set());
   const [dates, setDates] = useState<FormDates>({});
   const [deadline, setDeadline] = useState("");
+  // Date boxes Plan Check filled from the plan text. They follow the plan until the user edits them.
+  const [fromPlan, setFromPlan] = useState<Set<"start" | "end" | "deadline">>(new Set());
   const [checked, setChecked] = useState(false);
   const [view, setView] = useState<"edit" | "marked">("edit");
   const [active, setActive] = useState<number | null>(null);
@@ -65,9 +68,37 @@ export function PlanCheckApp() {
     [],
   );
 
+  function fillDatesFromPlan(text: string, current: FormDates, currentDeadline: string, owned: Set<"start" | "end" | "deadline">) {
+    const found = planDatesOf(text);
+    const next = { ...current };
+    let nextDeadline = currentDeadline;
+    const nextOwned = new Set<"start" | "end" | "deadline">();
+    for (const key of ["start", "end"] as const) {
+      const iso = found[key]?.iso;
+      const empty = !current[key];
+      if (iso && (empty || owned.has(key))) {
+        next[key] = iso;
+        nextOwned.add(key);
+      } else if (!iso && owned.has(key)) {
+        next[key] = undefined;
+      }
+    }
+    const dl = found.deadline?.iso;
+    if (dl && (!currentDeadline || owned.has("deadline"))) {
+      nextDeadline = dl;
+      nextOwned.add("deadline");
+    } else if (!dl && owned.has("deadline")) {
+      nextDeadline = "";
+    }
+    setDates(next);
+    setDeadline(nextDeadline);
+    setFromPlan(nextOwned);
+  }
+
   function runCheck() {
     if (!plan.trim()) return;
     setProfile((p) => autoTick(plan, p, touched));
+    fillDatesFromPlan(plan, dates, deadline, fromPlan);
     setChecked(true);
     setView("marked");
     setActive(null);
@@ -79,8 +110,7 @@ export function PlanCheckApp() {
     const locked = new Set<keyof Profile>();
     setTouched(locked);
     setProfile(autoTick(s.plan, { ...s.profile }, locked));
-    setDates({ ...s.dates });
-    setDeadline(s.deadline ?? "");
+    fillDatesFromPlan(s.plan, { ...s.dates }, s.deadline ?? "", new Set());
     setChecked(true);
     setView("marked");
     setActive(null);
@@ -92,6 +122,7 @@ export function PlanCheckApp() {
     setTouched(new Set());
     setDates({});
     setDeadline("");
+    setFromPlan(new Set());
     setChecked(false);
     setView("edit");
     setActive(null);
@@ -225,8 +256,15 @@ export function PlanCheckApp() {
             profile={profile}
             dates={dates}
             deadline={deadline}
-            onDate={(k, v) => setDates((d) => ({ ...d, [k]: v || undefined }))}
-            onDeadline={setDeadline}
+            onDate={(k, v) => {
+              setDates((d) => ({ ...d, [k]: v || undefined }));
+              if (k === "start" || k === "end") setFromPlan((o) => { const n = new Set(o); n.delete(k); return n; });
+            }}
+            onDeadline={(v) => {
+              setDeadline(v);
+              setFromPlan((o) => { const n = new Set(o); n.delete("deadline"); return n; });
+            }}
+            fromPlan={checked ? report?.planDates : undefined}
           />
         </div>
       </div>

@@ -78,7 +78,7 @@ export function checkDates(input: CheckInput): { findings: Finding[]; passes: Pa
       kind: "deterministic",
       title: "Enter your planned experiment start date",
       detail:
-        "Every form date is checked against the start date on Form 1A. Without it, Plan Check cannot test signature order.",
+        "Every form date is checked against the start date on Form 1A. Type it in the date box, or state it in your plan (for example, \"Experimentation will begin on November 2, 2026\").",
       why: "Reviewers check that forms were signed before experimentation began. Wrong order is the 'bad dates' problem on the Society's own list.",
       sources: [SRC.commonProblems, SRC.charlotte],
     });

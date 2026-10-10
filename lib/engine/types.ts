@@ -146,6 +146,19 @@ export interface PassItem {
   title: string;
 }
 
+export interface FoundDate {
+  iso: string;
+  /** The sentence in the plan the date came from. */
+  sentence: string;
+}
+
+/** Dates written in the plan text itself. */
+export interface PlanDates {
+  start?: FoundDate;
+  end?: FoundDate;
+  deadline?: FoundDate;
+}
+
 export interface Report {
   findings: Finding[];
   fixFirst: Finding[];
@@ -156,4 +169,6 @@ export interface Report {
   sections: SectionInfo[];
   wordCount: number;
   counts: { fix: number; warn: number; verify: number };
+  /** Dates found in the plan text, used where the date boxes are empty. */
+  planDates: PlanDates;
 }

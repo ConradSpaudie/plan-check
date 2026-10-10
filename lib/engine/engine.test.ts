@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { STRONG_SAMPLE, WEAK_SAMPLE } from "../samples";
 import { checkDates, plusYear } from "./dates";
-import { detect, detectFromPlan, emptyProfile, runChecks, suggestProfile } from "./index";
+import { detect, detectFromPlan, emptyProfile, extractPlanDates, runChecks, suggestProfile } from "./index";
 import { bibEntries } from "./plan";
 import { parsePlan } from "./sections";
 import type { FormDates, Profile } from "./types";
@@ -355,5 +355,54 @@ describe("consistency checks", () => {
     const d = detectFromPlan("My Project Title\nConrad Spaudie, Michael Brandt, Sep 24 2026\nProcedure\nThe app was built with AI coding assistance.");
     expect(suggestProfile(d).team).toBe(true);
     expect(suggestProfile(d).usesAI).toBe(true);
+  });
+});
+
+describe("dates written in the plan", () => {
+  it.each([
+    ["Experimentation will begin on November 2, 2026 and end on December 15, 2026.", "2026-11-02", "2026-12-15"],
+    ["Planned start date: 11/2/2026", "2026-11-02", undefined],
+    ["Proposed dates of experimentation: 11/02/26 to 12/15/26", "2026-11-02", "2026-12-15"],
+    ["Data collection will run from Nov 2 2026 through Dec 15 2026.", "2026-11-02", "2026-12-15"],
+    ["Start date: 2026-11-09", "2026-11-09", undefined],
+    ["The first session is scheduled for 2 November 2026.", "2026-11-02", undefined],
+  ])("reads %s", (line, start, end) => {
+    const d = extractPlanDates(`Procedure\n${line}`);
+    expect(d.start?.iso).toBe(start);
+    expect(d.end?.iso).toBe(end);
+  });
+
+  it("reads a fair deadline", () => {
+    expect(extractPlanDates("Procedure\nOur fair's pre-approval deadline is October 30, 2026.").deadline?.iso).toBe("2026-10-30");
+  });
+
+  it("ignores bylines, today's date and cited studies", () => {
+    const plan =
+      "My Study\nConrad Spaudie, Michael Brandt, Sep 24 2026\nToday's Date: 10/9/2026\nRationale\nThe 2019 trial ended on March 3, 2019.\nProcedure\nChildren read words.";
+    const d = extractPlanDates(plan);
+    expect(d.start).toBeUndefined();
+    expect(d.end).toBeUndefined();
+  });
+
+  it("uses the plan's start date when the box is empty, so the student is not asked to type it", () => {
+    const r = runChecks({
+      plan: "Procedure\nExperimentation will begin on November 2, 2026.",
+      profile: emptyProfile,
+      dates: { f1: "2026-11-05" },
+      today: TODAY,
+    });
+    expect(r.findings.some((f) => f.title === "Enter your planned experiment start date")).toBe(false);
+    expect(r.findings.some((f) => f.id === "B3" && f.severity === "fix" && f.title.includes("Form 1 "))).toBe(true);
+    expect(r.passes.some((p) => p.title === "Read the start date from your plan: 11/02/26")).toBe(true);
+  });
+
+  it("flags a plan date that disagrees with the date box", () => {
+    const r = runChecks({
+      plan: "Procedure\nExperimentation will begin on November 2, 2026.",
+      profile: emptyProfile,
+      dates: { start: "2026-11-09" },
+      today: TODAY,
+    });
+    expect(r.findings.some((f) => f.id === "B10" && f.severity === "fix")).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormDates, Profile } from "@/lib/engine/types";
+import type { FormDates, PlanDates, Profile } from "@/lib/engine/types";
 
 interface Row {
   key: keyof FormDates;
@@ -43,6 +43,13 @@ interface Props {
   deadline: string;
   onDate: (key: keyof FormDates, value: string) => void;
   onDeadline: (value: string) => void;
+  /** Dates Plan Check found in the plan text. Shown when the box is empty. */
+  fromPlan?: PlanDates;
+}
+
+function usPlanDate(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${m}/${d}/${y}`;
 }
 
 function DateField({
@@ -51,32 +58,40 @@ function DateField({
   note,
   value,
   onChange,
+  found,
 }: {
   id: string;
   label: string;
   note?: string;
   value: string;
   onChange: (v: string) => void;
+  found?: string;
 }) {
   return (
     <div className="grid grid-cols-1 gap-x-4 gap-y-1 border-t border-rule py-3 sm:grid-cols-[1fr_11rem] sm:items-end">
       <label htmlFor={id} className="leading-snug">
         <span className="font-bold">{label}</span>
         {note ? <span className="block text-sm text-pencil">{note}</span> : null}
+        {found && (!value || value === found) ? (
+          <span className="mt-1 block text-sm font-bold">Filled in from your plan: {usPlanDate(found)}</span>
+        ) : null}
+        {found && value && value !== found ? (
+          <span className="mt-1 block text-sm font-bold text-red-pen">Your plan says {usPlanDate(found)}. These should match.</span>
+        ) : null}
       </label>
       <input id={id} type="date" className="field" value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
 
-export function DatesPanel({ profile, dates, deadline, onDate, onDeadline }: Props) {
+export function DatesPanel({ profile, dates, deadline, onDate, onDeadline, fromPlan }: Props) {
   return (
     <section aria-labelledby="dates-title">
       <h2 id="dates-title" className="font-display text-2xl font-bold">
         Your dates
       </h2>
       <p className="mt-2 max-w-prose text-pencil">
-        Forms must be signed before you start. Add your planned start date and the date on each signed form. Leave a form blank if it is not signed yet.
+        Forms must be signed before you start. Add the date on each signed form, and leave a form blank if it is not signed yet. If your plan already states the start or end date, Plan Check reads it from there.
       </p>
 
       <div className="mt-4">
@@ -86,12 +101,14 @@ export function DatesPanel({ profile, dates, deadline, onDate, onDeadline }: Pro
           note="The start date on Form 1A. Everything is checked against it."
           value={dates.start ?? ""}
           onChange={(v) => onDate("start", v)}
+          found={fromPlan?.start?.iso}
         />
         <DateField
           id="d-end"
           label="Planned end of experimentation"
           value={dates.end ?? ""}
           onChange={(v) => onDate("end", v)}
+          found={fromPlan?.end?.iso}
         />
         <DateField
           id="d-deadline"
@@ -99,6 +116,7 @@ export function DatesPanel({ profile, dates, deadline, onDate, onDeadline }: Pro
           note="Optional. Fairs set their own, so check yours."
           value={deadline}
           onChange={onDeadline}
+          found={fromPlan?.deadline?.iso}
         />
       </div>
 

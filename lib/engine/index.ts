@@ -1,6 +1,8 @@
 import { checkAnimals, checkBio, checkComputational, checkHuman } from "./branches";
 import { checkFormsMentioned, checkReferenceCount, checkSessionLength, checkStepReferences } from "./consistency";
-import { checkDates } from "./dates";
+import { checkDates, fmt, isIso } from "./dates";
+import { extractPlanDates } from "./plandates";
+import { SRC } from "./sources";
 import { detect } from "./detect";
 import { formsNeeded, signatureSteps } from "./forms";
 import {
@@ -15,12 +17,13 @@ import {
 } from "./plan";
 import { parsePlan } from "./sections";
 import { words } from "./text";
-import type { CheckInput, Finding, GroupId, PassItem, Report, Severity } from "./types";
+import type { CheckInput, Finding, GroupId, PassItem, PlanDates, Report, Severity } from "./types";
 
 export * from "./types";
 export { detect, suggestProfile, emptyProfile } from "./detect";
 export { formsNeeded, signatureSteps, LEGACY_FORM_MAP } from "./forms";
 export { SRC } from "./sources";
+export { extractPlanDates } from "./plandates";
 
 const SEVERITY_RANK: Record<Severity, number> = { fix: 0, warn: 1, verify: 2 };
 
@@ -58,6 +61,12 @@ export function detectFromPlan(plan: string) {
   return detect(triggerText(parsed, plan ?? ""));
 }
 
+/** Start date, end date and fair deadline written in the plan, for the UI to fill empty date boxes. */
+export function planDatesOf(plan: string) {
+  const parsed = parsePlan(plan ?? "");
+  return extractPlanDates(triggerText(parsed, plan ?? ""));
+}
+
 export function sortFindings(list: Finding[]): Finding[] {
   return [...list].sort(
     (a, b) =>
@@ -73,12 +82,21 @@ export function runChecks(input: CheckInput): Report {
   const wordCount = words(plan);
   const detected = detect(triggerText(parsed, plan));
   const today = input.today ?? new Date().toISOString().slice(0, 10);
-  const withToday: CheckInput = { ...input, today };
+
+  // Dates written in the plan fill any date box the student left empty.
+  const planDates = extractPlanDates(triggerText(parsed, plan));
+  const dateChecks = planDateChecks(input, planDates);
+  const dates = { ...input.dates };
+  if (!isIso(dates.start) && planDates.start) dates.start = planDates.start.iso;
+  if (!isIso(dates.end) && planDates.end) dates.end = planDates.end.iso;
+  const deadline = isIso(input.deadline) ? input.deadline : planDates.deadline?.iso;
+  const withToday: CheckInput = { ...input, dates, deadline, today };
 
   const outs = [
     checkFormNumbers(plan),
     checkRouting(detected, input.profile),
     checkDates(withToday),
+    dateChecks,
     checkStructure(parsed, wordCount),
     checkProcedure(parsed),
     checkSafety(parsed, detected, input.profile),
@@ -112,5 +130,37 @@ export function runChecks(input: CheckInput): Report {
     sections: parsed.info,
     wordCount,
     counts,
+    planDates,
   };
+}
+
+const DATE_LABEL = { start: "start date", end: "end date", deadline: "fair deadline" } as const;
+
+/** B10: the plan and the date boxes should agree. */
+function planDateChecks(input: CheckInput, found: PlanDates): { findings: Finding[]; passes: PassItem[] } {
+  const findings: Finding[] = [];
+  const passes: PassItem[] = [];
+  const entered = { start: input.dates.start, end: input.dates.end, deadline: input.deadline };
+  for (const key of ["start", "end", "deadline"] as const) {
+    const f = found[key];
+    if (!f) continue;
+    const box = entered[key];
+    if (isIso(box) && box !== f.iso) {
+      findings.push({
+        id: "B10",
+        group: "dates",
+        severity: "fix",
+        kind: "cross-form",
+        title: `Your plan gives the ${DATE_LABEL[key]} as ${fmt(f.iso)}, but you entered ${fmt(box)}`,
+        detail: "Plan Check used the date you entered. Your plan, Form 1A and every form must use the same date.",
+        why: "Dates that disagree between the plan and the forms are the 'bad dates' problem on the Society's own list.",
+        evidence: [f.sentence],
+        askYourself: "Which date is right? Fix the other one before you submit.",
+        sources: [SRC.commonProblems, SRC.overview],
+      });
+    } else {
+      passes.push({ id: "B10", title: `Read the ${DATE_LABEL[key]} from your plan: ${fmt(f.iso)}` });
+    }
+  }
+  return { findings, passes };
 }
