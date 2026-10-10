@@ -15,6 +15,8 @@ import {
   type FormDates,
   type Profile,
 } from "@/lib/engine";
+import { words as countWords } from "@/lib/engine/text";
+import { ACCEPT, ExtractError, extractPlanText } from "@/lib/extract";
 import { STRONG_SAMPLE, WEAK_SAMPLE, type Sample } from "@/lib/samples";
 
 // Today's date is read on the client only, so the prerendered page never bakes in a build-time date.
@@ -37,6 +39,12 @@ export function PlanCheckApp() {
   const [view, setView] = useState<"edit" | "marked">("edit");
   const [active, setActive] = useState<number | null>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [fileState, setFileState] = useState<{ kind: "idle" | "reading" | "done" | "error"; message: string }>({
+    kind: "idle",
+    message: "",
+  });
+  const [dragging, setDragging] = useState(false);
 
   const today = useToday();
   const deferredPlan = useDeferredValue(plan);
@@ -95,14 +103,37 @@ export function PlanCheckApp() {
     setFromPlan(nextOwned);
   }
 
-  function runCheck() {
-    if (!plan.trim()) return;
-    setProfile((p) => autoTick(plan, p, touched));
-    fillDatesFromPlan(plan, dates, deadline, fromPlan);
+  function runCheck(text: string = plan) {
+    if (!text.trim()) return;
+    setProfile((p) => autoTick(text, p, touched));
+    fillDatesFromPlan(text, dates, deadline, fromPlan);
     setChecked(true);
     setView("marked");
     setActive(null);
     requestAnimationFrame(() => sheetRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
+  }
+
+  async function readFile(file: File | undefined) {
+    if (!file) return;
+    setFileState({ kind: "reading", message: `Reading ${file.name}…` });
+    try {
+      const text = await extractPlanText(file);
+      setPlan(text);
+      setView("marked");
+      runCheck(text);
+      const n = countWords(text);
+      setFileState({
+        kind: "done",
+        message: `Read ${n.toLocaleString("en-US")} words from ${file.name}. Switch to Edit to see the text Plan Check read.`,
+      });
+    } catch (e) {
+      setFileState({
+        kind: "error",
+        message: e instanceof ExtractError ? e.message : `${file.name} could not be read. Paste the text instead.`,
+      });
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
   }
 
   function loadSample(s: Sample) {
@@ -123,6 +154,7 @@ export function PlanCheckApp() {
     setDates({});
     setDeadline("");
     setFromPlan(new Set());
+    setFileState({ kind: "idle", message: "" });
     setChecked(false);
     setView("edit");
     setActive(null);
@@ -161,7 +193,7 @@ export function PlanCheckApp() {
             </p>
           </div>
           <p className="mt-2 max-w-prose text-pencil">
-            Paste your plan below. It stays in this browser. Nothing is uploaded unless you use the optional AI review.
+            Upload your plan as a PDF or Word file, or paste it below. Files are read on your computer. Nothing is uploaded unless you use the optional AI review.
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="View">
@@ -184,7 +216,45 @@ export function PlanCheckApp() {
             </button>
           </div>
 
-          <div className="sheet mt-3">
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <input
+              ref={fileRef}
+              id="plan-file"
+              type="file"
+              accept={ACCEPT}
+              className="visually-hidden"
+              onChange={(e) => readFile(e.target.files?.[0])}
+            />
+            <label htmlFor="plan-file" className="btn cursor-pointer">
+              Upload PDF or Word file
+            </label>
+            <span className="hidden text-sm text-pencil sm:inline">or drop the file on the box below</span>
+          </div>
+          <p
+            className={`mt-2 min-h-[1.5em] max-w-prose text-sm ${fileState.kind === "error" ? "font-bold text-red-pen" : "text-pencil"}`}
+            role="status"
+            aria-live="polite"
+          >
+            {fileState.message}
+          </p>
+
+          <div
+            className={`sheet mt-1 ${dragging ? "outline-[3px] outline-dashed outline-offset-2 outline-[var(--focus)]" : ""}`}
+            onDragOver={(e) => {
+              if (e.dataTransfer.types.includes("Files")) {
+                e.preventDefault();
+                setDragging(true);
+              }
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              if (e.dataTransfer.files.length > 0) {
+                e.preventDefault();
+                setDragging(false);
+                readFile(e.dataTransfer.files[0]);
+              }
+            }}
+          >
             {showMarks ? (
               <div className="max-h-[70vh] overflow-y-auto">
                 <AnnotatedPlan
@@ -203,7 +273,7 @@ export function PlanCheckApp() {
                   id="plan"
                   value={plan}
                   onChange={(e) => setPlan(e.target.value)}
-                  placeholder="Paste your research plan here, or load a sample below."
+                  placeholder="Paste your research plan here, drop a PDF or Word file, or load a sample below."
                   rows={18}
                   spellCheck
                   className="block min-h-[22rem] w-full resize-y border-0 bg-transparent px-5 py-5 text-[1.0625rem] leading-[1.85] text-ink outline-none placeholder:text-pencil focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--focus)]"
@@ -213,7 +283,7 @@ export function PlanCheckApp() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" className="btn btn-solid" onClick={runCheck} disabled={!plan.trim()}>
+            <button type="button" className="btn btn-solid" onClick={() => runCheck()} disabled={!plan.trim()}>
               Check my plan
             </button>
             <button type="button" className="btn" onClick={clearAll} disabled={!plan && !checked}>
@@ -293,7 +363,7 @@ export function PlanCheckApp() {
           <div className="sheet px-5 py-8 sm:px-7">
             <h2 className="font-display text-2xl font-bold">Your report appears here</h2>
             <p className="mt-2 max-w-prose text-pencil">
-              Paste your plan and press Check my plan. You will get the problems to fix first, the forms you probably need, and the order to sign them in.
+              Upload or paste your plan and press Check my plan. You will get the problems to fix first, the forms you probably need, and the order to sign them in.
             </p>
             <p className="mt-3 max-w-prose text-pencil">
               Want to see it first? Load a sample on the left.

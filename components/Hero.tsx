@@ -12,10 +12,10 @@ export function Hero() {
             Catch what the SRC will send back.
           </h1>
           <p className="mt-5 max-w-[46ch] text-lg">
-            Paste your ISEF research plan and enter your form dates. Plan Check marks it up the way a reviewer would, before you submit.
+            Upload or paste your ISEF research plan and enter your form dates. Plan Check marks it up the way a reviewer would, before you submit.
           </p>
           <p className="mt-3 max-w-[46ch] text-pencil">
-            Free. No account. Your plan stays in your browser. Checked against the 2026-27 ISEF rules and forms.
+            Free. No account. PDF, Word or pasted text, and your plan stays in your browser. Checked against the 2026-27 ISEF rules and forms.
           </p>
           <a href="#check" className="btn btn-solid mt-6 no-underline">
             Check my plan

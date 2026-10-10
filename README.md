@@ -1,6 +1,6 @@
 # Plan Check
 
-A free pre-reviewer for ISEF research plans. Paste your plan, say what your project involves, enter the dates on your signed forms, and Plan Check marks up your plan the way a Scientific Review Committee (SRC) reviewer would, before you submit.
+A free pre-reviewer for ISEF research plans. Upload your plan as a PDF or Word file (or paste it), say what your project involves, enter the dates on your signed forms, and Plan Check marks up your plan the way a Scientific Review Committee (SRC) reviewer would, before you submit.
 
 ![Plan Check marking up a research plan: red pen for fixes, highlighter for things to check, pencil for things to verify](docs/screenshot.png)
 
@@ -19,7 +19,7 @@ Three severities, drawn the way a reviewer marks paper: **Fix** (red pen), **Che
 
 ## Privacy
 
-The rule engine runs entirely in your browser. Your plan is not uploaded or stored.
+The rule engine runs entirely in your browser. PDF and Word files are read on your own computer with pdf.js and mammoth, and your plan is not uploaded or stored.
 
 The optional AI review is the only thing that sends your plan anywhere (to Claude through the Vercel AI Gateway). It is off until you tick a consent box. It only asks questions tied to exact sentences in your plan and never writes or rewrites text, because ISEF does not allow generative AI to write the plan. It produces an AI-use log you can copy for Form 2A. ISEF allows AI feedback on your own finished draft when you disclose it, but some fairs and teachers are stricter, so ask yours first.
 
