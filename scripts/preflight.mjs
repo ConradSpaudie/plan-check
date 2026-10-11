@@ -46,7 +46,7 @@ leaks.length === 0 ? ok("No secrets in source") : bad(`Possible secret in: ${lea
 
 // Typecheck and tests
 for (const [name, cmd] of [
-  ["Typecheck", "npx tsc --noEmit"],
+  ["Typecheck", "npm run typecheck"],
   ["Lint", "npx eslint ."],
   ["Tests", "npx vitest run"],
 ]) {
