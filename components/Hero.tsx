@@ -29,10 +29,7 @@ export function Hero({ onFile, onPaste, onSample, saved, onResume, busy, error }
           <h1 className="max-w-[14ch] font-display text-[2.4rem] font-extrabold leading-[1.02] sm:text-[3.4rem]">
             Catch what the SRC will send back.
           </h1>
-          <p className="mt-4 max-w-[46ch] text-lg">
-            Upload your ISEF research plan. Plan Check marks it up the way a reviewer would and lists the forms you need, before you submit.
-          </p>
-          <p className="mt-2 max-w-[46ch] text-pencil">Free. No account. Checked against the 2026-27 ISEF rules and forms.</p>
+          <p className="mt-4 max-w-[46ch] text-lg">Upload your ISEF research plan. Plan Check marks your research plan like an IRB reviewer.</p>
 
           {saved ? (
             <div className="no-print mt-5 flex max-w-[34rem] flex-wrap items-center gap-x-4 gap-y-2 border-l-4 border-ink pl-3">
@@ -78,9 +75,6 @@ export function Hero({ onFile, onPaste, onSample, saved, onResume, busy, error }
               </label>
               <span className="hidden text-pencil sm:inline">or drop the file here</span>
             </div>
-            <p className="mt-3 text-sm text-pencil">
-              PDF, Word or text file. It is read on your computer and is never uploaded.
-            </p>
             <p className="mt-2 text-sm font-bold text-red-pen empty:hidden" role="status" aria-live="polite">
               {error}
             </p>
@@ -128,9 +122,6 @@ export function Hero({ onFile, onPaste, onSample, saved, onResume, busy, error }
               </li>
             </ol>
           </div>
-          <figcaption className="mt-3 text-sm text-pencil">
-            Red pen means fix it. Highlighter means review it. Pencil means verify it with your fair.
-          </figcaption>
         </figure>
       </div>
     </header>

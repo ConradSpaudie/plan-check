@@ -416,10 +416,6 @@ export function PlanCheckApp() {
               <h2 id="step1-title" data-step-heading tabIndex={-1} className="font-display text-[1.75rem] font-bold">
                 Your research plan
               </h2>
-              <p className="mt-2 max-w-prose text-pencil">
-                Upload your plan as a PDF or Word file, or paste it below. Files are read on your computer. Nothing is uploaded
-                {AI_REVIEW ? " unless you use the optional AI review" : ""}.
-              </p>
 
               <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
                 <input
@@ -435,7 +431,6 @@ export function PlanCheckApp() {
                 <label htmlFor="plan-file" className="btn cursor-pointer">
                   Upload PDF or Word file
                 </label>
-                <span className="hidden text-sm text-pencil sm:inline">or drop the file on the box below</span>
               </div>
               <p
                 className={`mt-2 min-h-[1.5em] max-w-prose text-sm ${fileState.kind === "error" ? "font-bold text-red-pen" : "text-pencil"}`}
