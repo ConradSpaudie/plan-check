@@ -83,7 +83,7 @@ export function ReportView(props: Props) {
         data-report-header
         className={`z-10 border-b border-rule bg-sheet px-4 pt-4 sm:px-7 ${stickyHeader ? "sticky top-0" : ""}`}
       >
-        <h2 id="summary-title" className="font-display text-[1.6rem] font-bold leading-tight" aria-live="polite">
+        <h2 id="summary-title" tabIndex={-1} className="font-display text-[1.6rem] font-bold leading-tight" aria-live="polite">
           <Summary counts={counts} />
         </h2>
         <div role="tablist" aria-label="Report" className="no-print -mx-1 mt-3 flex gap-1 overflow-x-auto">

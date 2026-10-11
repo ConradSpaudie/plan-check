@@ -26,6 +26,28 @@ describe("app state", () => {
     expect(s.step).toBe(2);
   });
 
+  it("drops a sample's dates as soon as the student edits or replaces its text", () => {
+    let s = reducer(initialState, {
+      type: "loadSample",
+      plan: "Sample plan text",
+      profile: { ...emptyProfile, humans: true },
+      dates: { start: "2026-11-02", f1: "2026-11-02" },
+      deadline: "2026-10-30",
+    });
+    s = reducer(s, { type: "dismiss", key: "D3|x" });
+    s = reducer(s, { type: "setPlan", plan: "My own plan, pasted over the sample" });
+    expect(s.dates).toEqual({});
+    expect(s.deadline).toBe("");
+    expect(s.overrides).toEqual({});
+    expect(s.dismissed).toEqual([]);
+    expect(s.source).toBe("own");
+    expect(s.step).toBe(3);
+    // Further typing in the student's own plan keeps their dates.
+    s = reducer(s, { type: "setDate", key: "f1", value: "2026-10-20" });
+    s = reducer(s, { type: "setPlan", plan: "My own plan, edited" });
+    expect(s.dates.f1).toBe("2026-10-20");
+  });
+
   it("keeps the student's dates when they upload a revised plan", () => {
     let s = reducer(initialState, { type: "loadPlan", plan: "Draft one" });
     s = reducer(s, { type: "setDate", key: "f1", value: "2026-10-20" });
@@ -58,6 +80,11 @@ describe("app state", () => {
     expect(parseSaved(null)).toBeNull();
     expect(parseSaved("not json")).toBeNull();
     expect(parseSaved(JSON.stringify({ plan: "" }))).toBeNull();
+    expect(parseSaved(JSON.stringify({ plan: "", dates: { f1: "2026-10-20" } }))?.dates.f1).toBe("2026-10-20");
+    expect(parseSaved(JSON.stringify({ plan: "x", dates: { start: "none", f1: "none" }, deadline: "none" }))).toMatchObject({
+      dates: { start: "none" },
+      deadline: "none",
+    });
     const s = parseSaved(
       JSON.stringify({
         plan: "My plan",

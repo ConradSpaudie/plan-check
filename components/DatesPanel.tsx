@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { NOT_THIS_DATE, dateApplies } from "@/lib/engine/dates";
 import type { FormDates, PlanDates, Profile } from "@/lib/engine/types";
 
 interface Row {
@@ -13,33 +15,33 @@ interface Row {
 }
 
 const BEFORE: Row[] = [
-  { key: "f1", label: "Form 1, adult sponsor checklist", show: () => true, needed: () => true },
-  { key: "f1B_student", label: "Form 1B, student signature", show: () => true, needed: () => true },
-  { key: "f1B_parent", label: "Form 1B, parent or guardian signature", show: () => true, needed: () => true },
+  { key: "f1", label: "Form 1, adult sponsor checklist", show: (p) => dateApplies("f1", p), needed: () => true },
+  { key: "f1B_student", label: "Form 1B, student signature", show: (p) => dateApplies("f1B_student", p), needed: () => true },
+  { key: "f1B_parent", label: "Form 1B, parent or guardian signature", show: (p) => dateApplies("f1B_parent", p), needed: () => true },
   {
     key: "f1B_approval",
     label: "Form 1B, SRC or IRB prior approval",
-    show: (p) => p.humans || p.vertebrates || p.phba,
+    show: (p) => dateApplies("f1B_approval", p),
     needed: () => true,
   },
-  { key: "f4", label: "Form 4, human participants", note: "All three IRB members", show: (p) => p.humans, needed: () => true },
-  { key: "f5A", label: "Form 5A, vertebrate animals", show: (p) => p.vertebrates && !p.outsideSite, needed: () => true },
-  { key: "f6A", label: "Form 6A, biological agents", show: (p) => p.phba, needed: () => true },
-  { key: "f3", label: "Form 3, risk assessment", show: (p) => p.hazards || p.phba, needed: () => true },
+  { key: "f4", label: "Form 4, human participants", note: "All three IRB members", show: (p) => dateApplies("f4", p), needed: () => true },
+  { key: "f5A", label: "Form 5A, vertebrate animals", show: (p) => dateApplies("f5A", p), needed: () => true },
+  { key: "f6A", label: "Form 6A, biological agents", show: (p) => dateApplies("f6A", p), needed: () => true },
+  { key: "f3", label: "Form 3, risk assessment", show: (p) => dateApplies("f3", p), needed: () => true },
   {
     key: "f2B",
     label: "Form 2B, Qualified Scientist",
     note: "Was Form 2. Only if you work with one.",
-    show: () => true,
+    show: (p) => dateApplies("f2B", p),
     needed: () => false,
   },
 ];
 
 const AFTER: Row[] = [
-  { key: "f2C", label: "Form 2C, outside lab", note: "Was Form 1C. Signed by the site supervisor.", show: (p) => p.outsideSite, needed: () => false },
-  { key: "f5B", label: "Form 5B, animals at an institution", show: (p) => p.vertebrates && p.outsideSite, needed: () => false },
-  { key: "f7", label: "Form 7, continuation", show: (p) => p.continuation, needed: () => false },
-  { key: "finalSrc", label: "Final SRC review before the fair", note: "Form 1B section 3", show: () => true, needed: () => false },
+  { key: "f2C", label: "Form 2C, outside lab", note: "Was Form 1C. Signed by the site supervisor.", show: (p) => dateApplies("f2C", p), needed: () => false },
+  { key: "f5B", label: "Form 5B, animals at an institution", show: (p) => dateApplies("f5B", p), needed: () => false },
+  { key: "f7", label: "Form 7, continuation", show: (p) => dateApplies("f7", p), needed: () => false },
+  { key: "finalSrc", label: "Final SRC review before the fair", note: "Form 1B section 3", show: (p) => dateApplies("finalSrc", p), needed: () => false },
 ];
 
 interface Props {
@@ -82,27 +84,52 @@ function DateField({
   onChange: (v: string) => void;
   found?: string;
 }) {
-  // A date written in the plan shows in the box until the student types their own.
-  const shown = value || found || "";
+  const ignored = value === NOT_THIS_DATE;
+  // A date written in the plan shows in the box until the student types their own or says it is wrong.
+  const shown = ignored ? "" : value || found || "";
   return (
     <div className="grid grid-cols-1 gap-x-4 gap-y-1 border-t border-rule py-3 sm:grid-cols-[minmax(0,1fr)_11rem] sm:items-end">
-      <label htmlFor={id} className="leading-snug">
-        <span className="font-bold">{label}</span>
-        <Need needed={needed} />
-        {note ? <span className="block text-sm text-pencil">{note}</span> : null}
-        {found && !value ? <span className="mt-1 block text-sm font-bold">Filled in from your plan</span> : null}
-        {found && value && value !== found ? (
-          <span className="mt-1 block text-sm font-bold text-red-pen">Your plan says {usDate(found)}. These should match.</span>
+      <div className="leading-snug">
+        <label htmlFor={id}>
+          <span className="font-bold">{label}</span>
+          <Need needed={needed} />
+          {note ? <span className="block text-sm text-pencil">{note}</span> : null}
+        </label>
+        {found && !value ? (
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 text-sm">
+            <span className="font-bold">Filled in from your plan</span>
+            <button type="button" className="link-btn text-sm" onClick={() => onChange(NOT_THIS_DATE)}>
+              Not the right date
+            </button>
+          </p>
         ) : null}
-      </label>
-      <input id={id} type="date" className="field" value={shown} onChange={(e) => onChange(e.target.value)} />
+        {found && ignored ? (
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 text-sm">
+            <span className="text-pencil">Ignoring {usDate(found)} from your plan.</span>
+            <button type="button" className="link-btn text-sm" onClick={() => onChange("")}>
+              Use it again
+            </button>
+          </p>
+        ) : null}
+        {found && value && !ignored && value !== found ? (
+          <p className="mt-1 text-sm font-bold text-red-pen">Your plan says {usDate(found)}. These should match.</p>
+        ) : null}
+      </div>
+      <input
+        id={id}
+        type="date"
+        className="field"
+        value={shown}
+        onChange={(e) => onChange(e.target.value || (found ? NOT_THIS_DATE : ""))}
+      />
     </div>
   );
 }
 
 export function DatesPanel({ profile, dates, deadline, onDate, onDeadline, fromPlan }: Props) {
   const after = AFTER.filter((r) => r.show(profile));
-  const afterFilled = after.filter((r) => dates[r.key]).length;
+  // Starts open when there are dates in it, then stays however the student leaves it.
+  const [afterOpen, setAfterOpen] = useState(() => after.some((r) => dates[r.key]));
   return (
     <section aria-labelledby="dates-title">
       <h2 id="dates-title" className="font-display text-2xl font-bold">
@@ -156,7 +183,7 @@ export function DatesPanel({ profile, dates, deadline, onDate, onDeadline, fromP
         ))}
       </div>
 
-      <details className="mt-6 border-t border-rule" open={afterFilled > 0 ? true : undefined}>
+      <details className="mt-6 border-t border-rule" open={afterOpen} onToggle={(e) => setAfterOpen(e.currentTarget.open)}>
         <summary className="flex min-h-11 cursor-pointer items-center font-display text-xl font-bold">
           Completed after you finish ({after.length})
         </summary>

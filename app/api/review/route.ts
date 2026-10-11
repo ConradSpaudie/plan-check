@@ -72,6 +72,10 @@ const DEMO = {
 };
 
 export async function POST(req: Request) {
+  // Off unless the site owner turns the AI review on, so nobody can spend the gateway credits through a hidden route.
+  if (process.env.NEXT_PUBLIC_AI_REVIEW !== "1" && process.env.DEMO_MODE !== "1") {
+    return Response.json({ error: "Not found." }, { status: 404 });
+  }
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   if (limited(ip)) {
     return Response.json({ error: "You have used the AI review a few times this hour. Try again later." }, { status: 429 });

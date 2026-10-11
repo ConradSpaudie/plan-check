@@ -1,3 +1,4 @@
+import { NOT_THIS_DATE } from "./engine/dates";
 import { emptyProfile, suggestProfile } from "./engine/detect";
 import type { Detections, Finding, FormDates, Profile } from "./engine/types";
 
@@ -48,8 +49,14 @@ export function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "restore":
       return action.state;
-    case "setPlan":
-      return { ...state, plan: action.plan, step: action.plan.trim() ? state.step : 1 };
+    case "setPlan": {
+      const step = action.plan.trim() ? state.step : 1;
+      // Editing a sample makes it the student's own plan, so the sample's invented dates and ticks go.
+      if (state.source === "sample" && action.plan !== state.plan) {
+        return { ...initialState, plan: action.plan, step };
+      }
+      return { ...state, plan: action.plan, step };
+    }
     case "loadPlan": {
       const fresh = state.source === "sample";
       return {
@@ -131,7 +138,7 @@ export function parseSaved(raw: string | null): AppState | null {
   }
   if (!data || typeof data !== "object") return null;
   const d = data as Record<string, unknown>;
-  if (typeof d.plan !== "string" || !d.plan.trim()) return null;
+  if (typeof d.plan !== "string") return null;
 
   const overrides: Partial<Profile> = {};
   if (d.overrides && typeof d.overrides === "object") {
@@ -143,19 +150,22 @@ export function parseSaved(raw: string | null): AppState | null {
   const dates: FormDates = {};
   if (d.dates && typeof d.dates === "object") {
     for (const [k, v] of Object.entries(d.dates as Record<string, unknown>)) {
-      if (typeof v === "string" && ISO.test(v)) dates[k as keyof FormDates] = v;
+      if (typeof v !== "string") continue;
+      if (ISO.test(v) || (v === NOT_THIS_DATE && (k === "start" || k === "end"))) dates[k as keyof FormDates] = v;
     }
   }
   const step = d.step === 2 || d.step === 3 ? d.step : 1;
-  return {
+  const out: AppState = {
     plan: d.plan.slice(0, 200_000),
     overrides,
     dates,
-    deadline: typeof d.deadline === "string" && ISO.test(d.deadline) ? d.deadline : "",
+    deadline: typeof d.deadline === "string" && (ISO.test(d.deadline) || d.deadline === NOT_THIS_DATE) ? d.deadline : "",
     dismissed: Array.isArray(d.dismissed) ? d.dismissed.filter((x): x is string => typeof x === "string").slice(0, 200) : [],
     step,
     source: d.source === "sample" ? "sample" : "own",
   };
+  // Dates typed before the plan was pasted are worth keeping too.
+  return hasData(out) ? out : null;
 }
 
 export function hasData(s: AppState): boolean {

@@ -166,8 +166,16 @@ export function PlanCheckApp() {
 
   const go = useCallback((s: Step) => {
     dispatch({ type: "goto", step: s });
+    // The list can change between steps, so a highlight by position would land on the wrong note.
+    setActive(null);
+    setSheet(null);
     setScrollReq((n) => n + 1);
   }, []);
+
+  /** Runs after the phone sheet has closed and the browser has put focus back, so this focus wins. */
+  function afterSheet(fn: () => void) {
+    window.setTimeout(fn, 80);
+  }
 
   function resetView() {
     setActive(null);
@@ -265,9 +273,16 @@ export function PlanCheckApp() {
   }
 
   function dismiss(key: string) {
+    const fromSheet = sheet !== null;
     dispatch({ type: "dismiss", key });
     setActive(null);
     setSheet(null);
+    // The dismissed note and its mark leave the page, so move focus to the counts, which just changed.
+    afterSheet(() => {
+      if (fromSheet || !document.activeElement || document.activeElement === document.body) {
+        document.getElementById("summary-title")?.focus({ preventScroll: fromSheet });
+      }
+    });
   }
 
   const words = countWords(state.plan);
@@ -356,7 +371,10 @@ export function PlanCheckApp() {
     onToggle: toggleExpanded,
     onShowInPlan: showInPlan,
     onDismiss: dismiss,
-    onRestore: (key: string) => dispatch({ type: "restoreFinding", key }),
+    onRestore: (key: string) => {
+      dispatch({ type: "restoreFinding", key });
+      setActive(null);
+    },
     onAddDates: () => go(2),
     stickyHeader: true,
     footer: reportFooter,
@@ -564,9 +582,11 @@ export function PlanCheckApp() {
                   setTab("problems");
                   if (i !== null && visible[i]) {
                     setExpanded((prev) => new Set(prev).add(findingKey(visible[i])));
-                    requestAnimationFrame(() =>
-                      document.getElementById(`finding-${i}`)?.scrollIntoView({ block: "start", behavior: smooth() }),
-                    );
+                    afterSheet(() => {
+                      const row = document.getElementById(`finding-${i}`);
+                      row?.scrollIntoView({ block: "start", behavior: smooth() });
+                      row?.querySelector<HTMLButtonElement>("button[aria-expanded]")?.focus({ preventScroll: true });
+                    });
                   }
                 }}
               />

@@ -70,7 +70,11 @@ if (url) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ plan: "short" }),
     });
-    api.status === 400 ? ok("AI route validates input (400 on a short plan)") : bad(`AI route returned ${api.status} for a short plan`);
+    api.status === 400
+      ? ok("AI route validates input (400 on a short plan)")
+      : api.status === 404
+        ? ok("AI route is switched off (404), as expected while NEXT_PUBLIC_AI_REVIEW is not set")
+        : bad(`AI route returned ${api.status} for a short plan`);
   } catch (e) {
     bad(`Could not reach ${url}: ${e.message}`);
   }

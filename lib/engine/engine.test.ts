@@ -412,3 +412,25 @@ describe("dates written in the plan", () => {
     expect(r.findings.some((f) => f.id === "B10" && f.severity === "fix")).toBe(true);
   });
 });
+
+describe("dates the student cannot see or does not want", () => {
+  const plan = "Procedure\nExperimentation will begin on November 20, 2026. I will measure plant height.";
+  it("ignores a date left in a box for a form this project no longer needs", () => {
+    const r = runChecks({
+      plan,
+      profile: { ...emptyProfile },
+      dates: { start: "2026-11-02", f4: "2026-11-10", f2C: "2026-10-01", end: "2026-12-01" },
+      today: "2026-10-10",
+    });
+    const all = [...r.findings, ...r.needed].map((f) => f.title).join(" | ");
+    expect(all).not.toContain("Form 4");
+    expect(all).not.toContain("Form 2C");
+  });
+  it("does not use a plan date the student marked as not the right one", () => {
+    const used = runChecks({ plan, profile: { ...emptyProfile }, dates: {}, today: "2026-10-10" });
+    expect(used.needed.some((f) => f.asks === "start")).toBe(false);
+    const ignored = runChecks({ plan, profile: { ...emptyProfile }, dates: { start: "none" }, today: "2026-10-10" });
+    expect(ignored.needed.some((f) => f.asks === "start")).toBe(true);
+    expect(ignored.findings.some((f) => f.id === "B10")).toBe(false);
+  });
+});

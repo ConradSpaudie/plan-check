@@ -1,6 +1,6 @@
 import { checkAnimals, checkBio, checkComputational, checkHuman } from "./branches";
 import { checkFormsMentioned, checkReferenceCount, checkSessionLength, checkStepReferences } from "./consistency";
-import { checkDates, fmt, isIso } from "./dates";
+import { NOT_THIS_DATE, checkDates, dateApplies, fmt, isIso } from "./dates";
 import { extractPlanDates } from "./plandates";
 import { SRC } from "./sources";
 import { detect } from "./detect";
@@ -24,6 +24,7 @@ export { detect, suggestProfile, emptyProfile } from "./detect";
 export { formsNeeded, signatureSteps, LEGACY_FORM_MAP } from "./forms";
 export { SRC } from "./sources";
 export { extractPlanDates } from "./plandates";
+export { NOT_THIS_DATE, dateApplies } from "./dates";
 
 const SEVERITY_RANK: Record<Severity, number> = { fix: 0, warn: 1, verify: 2 };
 
@@ -86,10 +87,19 @@ export function runChecks(input: CheckInput): Report {
   // Dates written in the plan fill any date box the student left empty.
   const planDates = extractPlanDates(triggerText(parsed, plan));
   const dateChecks = planDateChecks(input, planDates);
-  const dates = { ...input.dates };
-  if (!isIso(dates.start) && planDates.start) dates.start = planDates.start.iso;
-  if (!isIso(dates.end) && planDates.end) dates.end = planDates.end.iso;
-  const deadline = isIso(input.deadline) ? input.deadline : planDates.deadline?.iso;
+  // Only dates for forms this project needs count. A date left in a box the student can no longer see is ignored.
+  const dates: CheckInput["dates"] = {};
+  for (const [k, v] of Object.entries(input.dates) as [keyof CheckInput["dates"], string | undefined][]) {
+    if (dateApplies(k, input.profile)) dates[k] = v;
+  }
+  // A date written in the plan fills an empty box, unless the student said it is not the right date.
+  if (!isIso(dates.start) && dates.start !== NOT_THIS_DATE && planDates.start) dates.start = planDates.start.iso;
+  if (!isIso(dates.end) && dates.end !== NOT_THIS_DATE && planDates.end) dates.end = planDates.end.iso;
+  const deadline = isIso(input.deadline)
+    ? input.deadline
+    : input.deadline === NOT_THIS_DATE
+      ? undefined
+      : planDates.deadline?.iso;
   const withToday: CheckInput = { ...input, dates, deadline, today };
 
   const outs = [
@@ -149,6 +159,7 @@ function planDateChecks(input: CheckInput, found: PlanDates): { findings: Findin
     const f = found[key];
     if (!f) continue;
     const box = entered[key];
+    if (box === NOT_THIS_DATE) continue;
     if (isIso(box) && box !== f.iso) {
       findings.push({
         id: "B10",

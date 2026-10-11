@@ -50,6 +50,36 @@ interface BeforeForm {
 
 const needsPriorApproval = (p: Profile) => p.humans || p.vertebrates || p.phba;
 
+/**
+ * Which form-date boxes apply to a project. The UI shows only these boxes, and the engine
+ * ignores dates for any other form, so a date left behind in a hidden box can never raise a finding.
+ */
+export function dateApplies(key: keyof FormDates, p: Profile): boolean {
+  switch (key) {
+    case "f1B_approval":
+      return needsPriorApproval(p);
+    case "f4":
+      return p.humans;
+    case "f5A":
+      return p.vertebrates && !p.outsideSite;
+    case "f6A":
+      return p.phba;
+    case "f3":
+      return p.hazards || p.phba;
+    case "f2C":
+      return p.outsideSite;
+    case "f5B":
+      return p.vertebrates && p.outsideSite;
+    case "f7":
+      return p.continuation;
+    default:
+      return true;
+  }
+}
+
+/** Stored in a date box when the student says the date found in their plan is not the right one. */
+export const NOT_THIS_DATE = "none";
+
 const BEFORE_FORMS: BeforeForm[] = [
   { key: "f1", label: "Form 1 (Adult Sponsor checklist)", needed: () => true, because: "it is required for every project", source: SRC.form1 },
   { key: "f1B_student", label: "Form 1B (student signature)", needed: () => true, because: "it is required for every project", source: SRC.form1B },
