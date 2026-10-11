@@ -35,7 +35,7 @@ Rollback log:
 
 | Date | What | Result |
 | --- | --- | --- |
-| | Practice rollback to the previous deploy, then Promote back | Not yet done |
+| 2026-10-11 | Rolled back 59187bb to 6ce688c, then promoted 59187bb back | Worked; footer version changed both ways |
 
 ## Owner walk-through (about 10 minutes)
 
