@@ -77,6 +77,7 @@ export function checkDates(input: CheckInput): { findings: Finding[]; passes: Pa
       severity: "warn",
       kind: "deterministic",
       title: "Enter your planned experiment start date",
+      asks: "start",
       detail:
         "Every form date is checked against the start date on Form 1A. Type it in the date box, or state it in your plan (for example, \"Experimentation will begin on November 2, 2026\").",
       why: "Reviewers check that forms were signed before experimentation began. Wrong order is the 'bad dates' problem on the Society's own list.",
@@ -91,6 +92,7 @@ export function checkDates(input: CheckInput): { findings: Finding[]; passes: Pa
       severity: "verify",
       kind: "deterministic",
       title: "Add a planned end date",
+      asks: "end",
       detail: "Form 1A asks for proposed start and end dates. The end date also decides when after-the-fact forms are signed.",
       why: "Incomplete Form 1A dates are the top paperwork problem on the Society's list.",
       sources: [SRC.commonProblems],
@@ -127,6 +129,7 @@ export function checkDates(input: CheckInput): { findings: Finding[]; passes: Pa
             severity: "warn",
             kind: "cross-form",
             title: `${f.label} has no date yet`,
+            asks: f.key,
             detail: `You need this form because ${f.because}. It must be signed and dated before ${fmt(start)}, your start date.`,
             why: "Experimentation cannot begin until the required forms are signed and approved.",
             askYourself: "Is this form signed yet? If not, you cannot start on that date.",

@@ -38,6 +38,11 @@ export interface Finding {
   /** A question for the student. The tool never supplies replacement text. */
   askYourself?: string;
   sources: SourceRef[];
+  /**
+   * Set when the finding is a missing input rather than a problem in the plan
+   * (for example, no start date yet). The UI lists these under "Still needed from you".
+   */
+  asks?: keyof FormDates;
 }
 
 export interface Profile {
@@ -160,7 +165,10 @@ export interface PlanDates {
 }
 
 export interface Report {
+  /** Problems in the plan or the dates. Missing inputs are in `needed`, not here. */
   findings: Finding[];
+  /** Inputs Plan Check still needs from the student, such as a start date or an undated form. */
+  needed: Finding[];
   fixFirst: Finding[];
   passes: PassItem[];
   formsNeeded: FormNeed[];

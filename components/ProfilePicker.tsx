@@ -23,46 +23,50 @@ const ITEMS: Item[] = [
 interface Props {
   profile: Profile;
   detected: Detections;
-  onToggle: (key: keyof Profile) => void;
+  onChange: (key: keyof Profile, value: boolean) => void;
 }
 
-export function ProfilePicker({ profile, detected, onToggle }: Props) {
+/** The words Plan Check matched, so the student can judge whether a tick is right. */
+function foundTerms(detected: Detections, key?: keyof Detections): string[] {
+  if (!key) return [];
+  const seen = new Set<string>();
+  for (const h of detected[key]) {
+    const t = h.term.trim().toLowerCase();
+    if (t) seen.add(t);
+    if (seen.size === 3) break;
+  }
+  return [...seen];
+}
+
+export function ProfilePicker({ profile, detected, onChange }: Props) {
   return (
-    <fieldset className="m-0 border-0 p-0">
+    <fieldset className="m-0 min-w-0 border-0 p-0">
       <legend className="font-display text-2xl font-bold">What your project involves</legend>
       <p className="mt-2 max-w-prose text-pencil">
-        Plan Check ticks what it finds in your plan. Change anything it got wrong. Each tick adds the forms and checks that go with it.
+        Plan Check ticked what it found in your plan. Change anything it got wrong. Each tick adds the forms and checks that go with it.
       </p>
-      <ul className="mt-4 grid list-none gap-2 p-0 sm:grid-cols-2">
+      <ul className="mt-4 grid list-none gap-x-8 p-0 md:grid-cols-2">
         {ITEMS.map((it) => {
-          const on = profile[it.key];
-          const found = it.detect ? detected[it.detect].length > 0 : false;
+          const terms = foundTerms(detected, it.detect);
           return (
-            <li key={it.key}>
-              <button
-                type="button"
-                aria-pressed={on}
-                onClick={() => onToggle(it.key)}
-                className={`flex w-full items-start gap-3 border-2 px-3 py-2.5 text-left transition-colors ${
-                  on ? "border-ink bg-ink text-sheet" : "border-ink bg-sheet text-ink hover:bg-paper"
-                }`}
-              >
-                <span
-                  aria-hidden
-                  className={`mt-1 grid h-5 w-5 shrink-0 place-items-center border-2 text-sm font-bold leading-none ${
-                    on ? "border-sheet" : "border-ink"
-                  }`}
-                >
-                  {on ? "✓" : ""}
-                </span>
-                <span>
+            <li key={it.key} className="border-t border-rule">
+              <label className="flex min-h-11 cursor-pointer items-start gap-3 py-3">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-[var(--ink)]"
+                  checked={profile[it.key]}
+                  onChange={(e) => onChange(it.key, e.target.checked)}
+                />
+                <span className="min-w-0">
                   <span className="block font-bold leading-snug">{it.label}</span>
-                  <span className={`block text-sm leading-snug ${on ? "opacity-80" : "text-pencil"}`}>
-                    {it.hint}
-                  </span>
-                  {found ? <span className="block text-sm font-bold leading-snug">Found in your plan</span> : null}
+                  <span className="block text-sm leading-snug text-pencil">{it.hint}</span>
+                  {terms.length > 0 ? (
+                    <span className="mt-1 block text-sm leading-snug">
+                      <span className="font-bold">Found in your plan:</span> {terms.map((t) => `“${t}”`).join(", ")}
+                    </span>
+                  ) : null}
                 </span>
-              </button>
+              </label>
             </li>
           );
         })}

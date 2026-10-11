@@ -202,7 +202,13 @@ describe("weak sample with the humans box ticked", () => {
   it("asks for IRB detail and Form 4", () => {
     expect(ids(report)).toContain("E1");
     expect(report.formsNeeded.some((f) => f.id === "4")).toBe(true);
-    expect(report.findings.some((f) => f.id === "B3" && f.title.includes("Form 4"))).toBe(true);
+    expect(report.needed.some((f) => f.id === "B3" && f.title.includes("Form 4"))).toBe(true);
+  });
+  it("keeps missing dates out of the findings and the counts", () => {
+    expect(report.findings.some((f) => f.asks)).toBe(false);
+    expect(report.needed.every((f) => f.asks)).toBe(true);
+    const total = report.counts.fix + report.counts.warn + report.counts.verify;
+    expect(total).toBe(report.findings.length);
   });
 });
 

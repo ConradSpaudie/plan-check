@@ -205,6 +205,42 @@ a {
   color: var(--ink);
 }
 
+/* Secondary actions inside a report row. Still at least 32px tall, over the 24px minimum. */
+.btn-sm {
+  min-height: 2rem;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.95rem;
+}
+
+/* A button that reads as a link. Tall enough to tap: 44px on phones, 32px with a mouse. */
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+@media (pointer: fine) {
+  .link-btn {
+    min-height: 2rem;
+  }
+}
+
+/* Links in running lists (sources) get a 24px tap height without changing the line rhythm much. */
+.tap-link {
+  display: inline-block;
+  min-height: 1.5rem;
+  padding: 0.15rem 0;
+}
+
 /* ------------------------------------------------------------ sheet */
 
 .sheet {
@@ -255,6 +291,50 @@ a {
   }
 }
 
+/*
+  Closed report tabs and closed findings are hidden on screen only, so printing shows all of them.
+  (The hidden attribute cannot be used: Tailwind's base layer makes it display: none !important everywhere.)
+*/
+@media screen {
+  .screen-hidden {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------ phone note sheet */
+
+dialog.note-sheet {
+  margin: auto auto 0;
+  width: 100%;
+  max-width: 40rem;
+  max-height: 75vh;
+  padding: 0;
+  border: 1.5px solid var(--ink);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: var(--sheet);
+  color: var(--ink);
+}
+
+dialog.note-sheet::backdrop {
+  background: rgba(14, 21, 37, 0.45);
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+dialog.note-sheet[open] {
+  animation: rise 0.18s ease-out;
+}
+
 @media print {
   body {
     background: #fff;
@@ -262,5 +342,13 @@ a {
   }
   .no-print {
     display: none !important;
+  }
+  [data-print-panel] {
+    margin-top: 1.5rem;
+  }
+  .report-scroll {
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
   }
 }

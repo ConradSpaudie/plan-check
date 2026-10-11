@@ -1,29 +1,22 @@
 "use client";
 
-import { useMemo } from "react";
-import { annotate } from "@/lib/annotate";
-import type { Finding } from "@/lib/engine/types";
+import type { Segment } from "@/lib/annotate";
 
 const CLASS = { fix: "mk mk-fix", warn: "mk mk-warn", verify: "mk mk-verify" } as const;
-const SR = { fix: "Fix", warn: "Check", verify: "Verify" } as const;
+const SR = { fix: "Fix", warn: "Review", verify: "Verify" } as const;
 
 interface Props {
-  plan: string;
-  findings: Finding[];
+  segments: Segment[];
   activeFinding: number | null;
   onSelect: (index: number) => void;
 }
 
 /** The student's own plan with a reviewer's marks on it. Text is never changed. */
-export function AnnotatedPlan({ plan, findings, activeFinding, onSelect }: Props) {
-  const segments = useMemo(() => annotate(plan, findings), [plan, findings]);
+export function AnnotatedPlan({ segments, activeFinding, onSelect }: Props) {
   const firstSeen = new Set<number>();
 
   return (
-    <div
-      className="whitespace-pre-wrap [overflow-wrap:anywhere] px-5 py-5 text-[1.0625rem] leading-[1.85]"
-      aria-label="Your plan with reviewer marks"
-    >
+    <div className="whitespace-pre-wrap [overflow-wrap:anywhere] px-5 py-5 text-[1.0625rem] leading-[1.85]">
       {segments.map((seg, i) => {
         if (seg.finding === undefined || !seg.severity) return <span key={i}>{seg.text}</span>;
         const isFirst = !firstSeen.has(seg.finding);

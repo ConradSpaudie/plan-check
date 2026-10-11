@@ -1,23 +1,33 @@
 "use client";
 
-import { useCallback, useDeferredValue, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from "react";
 import { AiReview } from "@/components/AiReview";
 import { AnnotatedPlan } from "@/components/AnnotatedPlan";
 import { DatesPanel } from "@/components/DatesPanel";
+import { FindingSheet } from "@/components/FindingSheet";
+import { Hero } from "@/components/Hero";
 import { ProfilePicker } from "@/components/ProfilePicker";
-import { ReportView } from "@/components/ReportView";
-import {
-  detectFromPlan,
-  emptyProfile,
-  planDatesOf,
-  runChecks,
-  suggestProfile,
-  type FormDates,
-  type Profile,
-} from "@/lib/engine";
+import { ReportView, Summary, type TabId } from "@/components/ReportView";
+import { SEVERITY_LABEL } from "@/components/SeverityTag";
+import { Stepper } from "@/components/Stepper";
+import { annotate } from "@/lib/annotate";
+import { detectFromPlan, runChecks, type Finding, type Profile, type Severity } from "@/lib/engine";
 import { words as countWords } from "@/lib/engine/text";
 import { ACCEPT, ExtractError, extractPlanText } from "@/lib/extract";
 import { STRONG_SAMPLE, WEAK_SAMPLE, type Sample } from "@/lib/samples";
+import {
+  STORAGE_KEY,
+  findingKey,
+  hasData,
+  initialState,
+  parseSaved,
+  profileOf,
+  reducer,
+  type Step,
+} from "@/lib/state";
+
+/** The AI review stays hidden until the site owner switches it on (NEXT_PUBLIC_AI_REVIEW=1). */
+const AI_REVIEW = process.env.NEXT_PUBLIC_AI_REVIEW === "1";
 
 // Today's date is read on the client only, so the prerendered page never bakes in a build-time date.
 const noop = () => () => {};
@@ -27,90 +37,143 @@ function useToday(): string {
   return useSyncExternalStore(noop, clientToday, serverToday);
 }
 
+const WIDE = "(min-width: 64rem)";
+function subscribeWide(cb: () => void) {
+  const m = window.matchMedia(WIDE);
+  m.addEventListener("change", cb);
+  return () => m.removeEventListener("change", cb);
+}
+/** Desktop layout (plan and report side by side) or phone layout (report tabs). */
+function useWide(): boolean {
+  return useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => false);
+}
+
+function smooth(): ScrollBehavior {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}
+
+type FileState = { kind: "idle" | "reading" | "done" | "error"; message: string };
+
+/** Asks twice before wiping, because it cannot be undone. */
+function ClearButton({ onClear }: { onClear: () => void }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 5000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return (
+    <button
+      type="button"
+      className="btn"
+      onClick={() => {
+        if (armed) {
+          setArmed(false);
+          onClear();
+        } else setArmed(true);
+      }}
+    >
+      {armed ? "Select again to clear everything" : "Clear my data"}
+    </button>
+  );
+}
+
 export function PlanCheckApp() {
-  const [plan, setPlan] = useState("");
-  const [profile, setProfile] = useState<Profile>({ ...emptyProfile });
-  const [touched, setTouched] = useState<Set<keyof Profile>>(new Set());
-  const [dates, setDates] = useState<FormDates>({});
-  const [deadline, setDeadline] = useState("");
-  // Date boxes Plan Check filled from the plan text. They follow the plan until the user edits them.
-  const [fromPlan, setFromPlan] = useState<Set<"start" | "end" | "deadline">>(new Set());
-  const [checked, setChecked] = useState(false);
-  const [view, setView] = useState<"edit" | "marked">("edit");
-  const [active, setActive] = useState<number | null>(null);
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [fileState, setFileState] = useState<{ kind: "idle" | "reading" | "done" | "error"; message: string }>({
-    kind: "idle",
-    message: "",
-  });
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const [fileState, setFileState] = useState<FileState>({ kind: "idle", message: "" });
   const [dragging, setDragging] = useState(false);
+  const [active, setActive] = useState<number | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<TabId>("problems");
+  const [sheet, setSheet] = useState<number | null>(null);
+  const [scrollReq, setScrollReq] = useState(0);
+  const mainRef = useRef<HTMLElement>(null);
+  const reportScrollRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
 
   const today = useToday();
-  const deferredPlan = useDeferredValue(plan);
+  const wide = useWide();
+
+  // ---------------------------------------------------------------- saved in this browser
+  useEffect(() => {
+    let saved = null;
+    try {
+      saved = parseSaved(window.localStorage.getItem(STORAGE_KEY));
+    } catch {
+      // Storage can be blocked (private mode, school policies). The page works without it.
+    }
+    if (saved) dispatch({ type: "restore", state: saved });
+  }, []);
+
+  useEffect(() => {
+    // The untouched initial state is never written, so it cannot overwrite a saved plan on first load.
+    if (state === initialState) return;
+    const t = setTimeout(() => {
+      try {
+        if (hasData(state)) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        else window.localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // Full or blocked storage: keep working without saving.
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [state]);
+
+  // ---------------------------------------------------------------- the live report
+  const deferredPlan = useDeferredValue(state.plan);
   const detected = useMemo(() => detectFromPlan(deferredPlan), [deferredPlan]);
+  const profile = useMemo(() => profileOf(detected, state.overrides), [detected, state.overrides]);
 
   const report = useMemo(
     () =>
       today
-        ? runChecks({
-            plan: deferredPlan,
-            profile,
-            dates,
-            deadline: deadline || undefined,
-            today,
-          })
+        ? runChecks({ plan: deferredPlan, profile, dates: state.dates, deadline: state.deadline || undefined, today })
         : null,
-    [deferredPlan, profile, dates, deadline, today],
+    [deferredPlan, profile, state.dates, state.deadline, today],
   );
 
-  const autoTick = useCallback(
-    (text: string, base: Profile, locked: Set<keyof Profile>) => {
-      const s = suggestProfile(detectFromPlan(text));
-      const next = { ...base };
-      for (const k of Object.keys(s) as (keyof Profile)[]) {
-        if (!locked.has(k) && s[k] !== undefined) next[k] = s[k] as boolean;
-      }
-      return next;
-    },
-    [],
-  );
+  const { visible, dismissed, counts } = useMemo(() => {
+    const gone = new Set(state.dismissed);
+    const visible: Finding[] = [];
+    const dismissed: Finding[] = [];
+    for (const f of report?.findings ?? []) (gone.has(findingKey(f)) ? dismissed : visible).push(f);
+    const counts: Record<Severity, number> = { fix: 0, warn: 0, verify: 0 };
+    for (const f of visible) counts[f.severity]++;
+    return { visible, dismissed, counts };
+  }, [report, state.dismissed]);
 
-  function fillDatesFromPlan(text: string, current: FormDates, currentDeadline: string, owned: Set<"start" | "end" | "deadline">) {
-    const found = planDatesOf(text);
-    const next = { ...current };
-    let nextDeadline = currentDeadline;
-    const nextOwned = new Set<"start" | "end" | "deadline">();
-    for (const key of ["start", "end"] as const) {
-      const iso = found[key]?.iso;
-      const empty = !current[key];
-      if (iso && (empty || owned.has(key))) {
-        next[key] = iso;
-        nextOwned.add(key);
-      } else if (!iso && owned.has(key)) {
-        next[key] = undefined;
-      }
-    }
-    const dl = found.deadline?.iso;
-    if (dl && (!currentDeadline || owned.has("deadline"))) {
-      nextDeadline = dl;
-      nextOwned.add("deadline");
-    } else if (!dl && owned.has("deadline")) {
-      nextDeadline = "";
-    }
-    setDates(next);
-    setDeadline(nextDeadline);
-    setFromPlan(nextOwned);
-  }
+  const segments = useMemo(() => annotate(deferredPlan, visible), [deferredPlan, visible]);
+  const marked = useMemo(() => {
+    const s = new Set<number>();
+    for (const seg of segments) if (seg.finding !== undefined) s.add(seg.finding);
+    return s;
+  }, [segments]);
+  const unmarked = visible.map((f, i) => ({ f, i })).filter(({ i }) => !marked.has(i));
 
-  function runCheck(text: string = plan) {
-    if (!text.trim()) return;
-    setProfile((p) => autoTick(text, p, touched));
-    fillDatesFromPlan(text, dates, deadline, fromPlan);
-    setChecked(true);
-    setView("marked");
+  const hasPlan = state.plan.trim().length > 0;
+  const step: Step = hasPlan ? state.step : 1;
+  const currentTab: TabId = wide && tab === "plan" ? "problems" : tab;
+
+  // ---------------------------------------------------------------- moving between steps
+  // Every step change brings the top of the app into view and moves focus to the step's heading.
+  useEffect(() => {
+    if (scrollReq === 0) return;
+    const main = mainRef.current;
+    if (!main) return;
+    main.scrollIntoView({ block: "start", behavior: smooth() });
+    main.querySelector<HTMLElement>("[data-step-heading]")?.focus({ preventScroll: true });
+  }, [scrollReq]);
+
+  const go = useCallback((s: Step) => {
+    dispatch({ type: "goto", step: s });
+    setScrollReq((n) => n + 1);
+  }, []);
+
+  function resetView() {
     setActive(null);
-    requestAnimationFrame(() => sheetRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
+    setExpanded(new Set());
+    setTab("problems");
+    setSheet(null);
   }
 
   async function readFile(file: File | undefined) {
@@ -118,259 +181,399 @@ export function PlanCheckApp() {
     setFileState({ kind: "reading", message: `Reading ${file.name}…` });
     try {
       const text = await extractPlanText(file);
-      setPlan(text);
-      setView("marked");
-      runCheck(text);
-      const n = countWords(text);
+      if (!text.trim()) throw new ExtractError(`${file.name} has no text Plan Check can read. Paste the text instead.`);
+      dispatch({ type: "loadPlan", plan: text });
+      resetView();
       setFileState({
         kind: "done",
-        message: `Read ${n.toLocaleString("en-US")} words from ${file.name}. Switch to Edit to see the text Plan Check read.`,
+        message: `Read ${countWords(text).toLocaleString("en-US")} words from ${file.name}.`,
       });
+      setScrollReq((n) => n + 1);
     } catch (e) {
       setFileState({
         kind: "error",
         message: e instanceof ExtractError ? e.message : `${file.name} could not be read. Paste the text instead.`,
       });
-    } finally {
-      if (fileRef.current) fileRef.current.value = "";
     }
   }
 
   function loadSample(s: Sample) {
-    setPlan(s.plan);
-    const locked = new Set<keyof Profile>();
-    setTouched(locked);
-    setProfile(autoTick(s.plan, { ...s.profile }, locked));
-    fillDatesFromPlan(s.plan, { ...s.dates }, s.deadline ?? "", new Set());
-    setChecked(true);
-    setView("marked");
-    setActive(null);
+    dispatch({ type: "loadSample", plan: s.plan, profile: s.profile, dates: s.dates, deadline: s.deadline });
+    resetView();
+    setFileState({ kind: "idle", message: "" });
+    setScrollReq((n) => n + 1);
   }
 
   function clearAll() {
-    setPlan("");
-    setProfile({ ...emptyProfile });
-    setTouched(new Set());
-    setDates({});
-    setDeadline("");
-    setFromPlan(new Set());
+    dispatch({ type: "clear" });
+    resetView();
     setFileState({ kind: "idle", message: "" });
-    setChecked(false);
-    setView("edit");
-    setActive(null);
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // Nothing saved to remove.
+    }
+    setScrollReq((n) => n + 1);
   }
 
-  function toggle(key: keyof Profile) {
-    setTouched((t) => new Set(t).add(key));
-    setProfile((p) => ({ ...p, [key]: !p[key] }));
+  function pasteInstead() {
+    dispatch({ type: "goto", step: 1 });
+    mainRef.current?.scrollIntoView({ block: "start", behavior: smooth() });
+    requestAnimationFrame(() => textRef.current?.focus({ preventScroll: true }));
   }
 
-  function showInPlan(i: number) {
-    setView("marked");
-    requestAnimationFrame(() => {
-      document.getElementById(`mark-${i}`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+  function toggleExpanded(key: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
     });
   }
 
-  function selectFromPlan(i: number) {
+  /** A mark (or a note about the whole plan) was chosen. Desktop: open its note in place. Phone: open the sheet. */
+  function selectFinding(i: number) {
     setActive(i);
-    document.getElementById(`finding-${i}`)?.scrollIntoView({ block: "start", behavior: "smooth" });
+    const f = visible[i];
+    if (!f) return;
+    if (!wide) {
+      setSheet(i);
+      return;
+    }
+    setTab("problems");
+    setExpanded((prev) => new Set(prev).add(findingKey(f)));
+    requestAnimationFrame(() => {
+      const box = reportScrollRef.current;
+      const el = document.getElementById(`finding-${i}`);
+      if (!box || !el) return;
+      const header = box.querySelector<HTMLElement>("[data-report-header]")?.offsetHeight ?? 0;
+      const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - header - 8;
+      box.scrollTo({ top, behavior: smooth() });
+      el.querySelector<HTMLButtonElement>("button[aria-expanded]")?.focus({ preventScroll: true });
+    });
   }
 
-  const showMarks = checked && view === "marked";
-  const words = report?.wordCount ?? 0;
+  function showInPlan(i: number) {
+    setActive(i);
+    setSheet(null);
+    if (!wide) setTab("plan");
+    requestAnimationFrame(() => {
+      const mark = document.getElementById(`mark-${i}`);
+      mark?.scrollIntoView({ block: "center", behavior: smooth() });
+      mark?.focus({ preventScroll: true });
+    });
+  }
 
+  function dismiss(key: string) {
+    dispatch({ type: "dismiss", key });
+    setActive(null);
+    setSheet(null);
+  }
+
+  const words = countWords(state.plan);
+  const sheetFinding = sheet !== null ? (visible[sheet] ?? null) : null;
+
+  // ---------------------------------------------------------------- pieces
+  const legend = (
+    <p className="max-w-prose text-sm text-pencil">
+      <span className="mk mk-fix">Red pen</span> means fix, <span className="mk mk-warn">highlighter</span> means review,{" "}
+      <span className="mk mk-verify">pencil</span> means verify. Select a mark to read its note.
+    </p>
+  );
+
+  const unmarkedList =
+    unmarked.length > 0 ? (
+      <details className="mt-3 border-y border-rule">
+        <summary className="flex min-h-11 cursor-pointer items-center font-bold">
+          {unmarked.length === 1 ? "1 note is" : `${unmarked.length} notes are`} not tied to a sentence
+        </summary>
+        <ul className="list-none p-0 pb-2">
+          {unmarked.map(({ f, i }) => (
+            <li key={findingKey(f)}>
+              <button
+                type="button"
+                className="flex min-h-11 w-full items-center gap-3 text-left hover:underline"
+                onClick={() => selectFinding(i)}
+              >
+                <span className="w-14 shrink-0 text-sm font-bold">{SEVERITY_LABEL[f.severity]}</span>
+                <span className="min-w-0">{f.title}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </details>
+    ) : null;
+
+  const planHeader = (
+    <div className="flex flex-wrap items-center justify-between gap-x-4">
+      <h3 className="font-display text-xl font-bold">Your plan, marked up</h3>
+      <button type="button" className="link-btn no-print" onClick={() => go(1)}>
+        Edit the text
+      </button>
+    </div>
+  );
+
+  const planView = (
+    <>
+      {planHeader}
+      {legend}
+      {unmarkedList}
+      <div className="sheet mt-3">
+        <AnnotatedPlan segments={segments} activeFinding={active} onSelect={selectFinding} />
+      </div>
+    </>
+  );
+
+  const reportFooter = (
+    <div className="no-print mt-10 border-t border-rule pt-5">
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className="btn" onClick={() => window.print()}>
+          Print or save as PDF
+        </button>
+        <ClearButton onClear={clearAll} />
+      </div>
+      <p className="mt-2 max-w-prose text-sm text-pencil">
+        Your plan, ticks and dates are saved in this browser only, so they are here when you come back. Clear my data removes them.
+      </p>
+      {AI_REVIEW ? (
+        <div className="mt-10">
+          <AiReview plan={state.plan} />
+        </div>
+      ) : null}
+    </div>
+  );
+
+  const reportProps = {
+    report: report!,
+    visible,
+    dismissed,
+    counts,
+    marked,
+    active,
+    expanded,
+    tab: currentTab,
+    onTab: setTab,
+    onToggle: toggleExpanded,
+    onShowInPlan: showInPlan,
+    onDismiss: dismiss,
+    onRestore: (key: string) => dispatch({ type: "restoreFinding", key }),
+    onAddDates: () => go(2),
+    stickyHeader: true,
+    footer: reportFooter,
+  };
+
+  // ---------------------------------------------------------------- render
   return (
-    <div className="mx-auto grid w-full max-w-[1200px] gap-10 px-4 pb-20 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-12">
-      <div className="min-w-0">
-        <div ref={sheetRef} className="scroll-mt-4">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <h2 id="plan-title" className="font-display text-2xl font-bold">
-              Your research plan
-            </h2>
-            <p className="text-sm text-pencil" aria-live="polite">
-              {words} {words === 1 ? "word" : "words"}
-            </p>
-          </div>
-          <p className="mt-2 max-w-prose text-pencil">
-            Upload your plan as a PDF or Word file, or paste it below. Files are read on your computer. Nothing is uploaded unless you use the optional AI review.
-          </p>
+    <>
+      <Hero
+        onFile={readFile}
+        onPaste={pasteInstead}
+        onSample={() => loadSample(WEAK_SAMPLE)}
+        saved={hasPlan}
+        onResume={() => go(state.step)}
+        busy={fileState.kind === "reading"}
+        error={fileState.kind === "error" ? fileState.message : ""}
+      />
 
-          <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="View">
-            <button
-              type="button"
-              className={`btn ${!showMarks ? "btn-solid" : ""}`}
-              aria-pressed={!showMarks}
-              onClick={() => setView("edit")}
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              className={`btn ${showMarks ? "btn-solid" : ""}`}
-              aria-pressed={showMarks}
-              disabled={!checked}
-              onClick={() => setView("marked")}
-            >
-              Marked up
-            </button>
-          </div>
+      <main id="check" ref={mainRef} className="border-t-2 border-ink pt-5">
+        <div className="mx-auto w-full max-w-[1200px] px-4 pb-20 sm:px-6">
+          <Stepper step={step} canAdvance={hasPlan} onGo={go} />
 
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-            <input
-              ref={fileRef}
-              id="plan-file"
-              type="file"
-              accept={ACCEPT}
-              className="visually-hidden"
-              onChange={(e) => readFile(e.target.files?.[0])}
-            />
-            <label htmlFor="plan-file" className="btn cursor-pointer">
-              Upload PDF or Word file
-            </label>
-            <span className="hidden text-sm text-pencil sm:inline">or drop the file on the box below</span>
-          </div>
-          <p
-            className={`mt-2 min-h-[1.5em] max-w-prose text-sm ${fileState.kind === "error" ? "font-bold text-red-pen" : "text-pencil"}`}
-            role="status"
-            aria-live="polite"
-          >
-            {fileState.message}
-          </p>
+          {/* ------------------------------------------------ step 1: the plan */}
+          {step === 1 ? (
+            <section aria-labelledby="step1-title" className="mt-5 max-w-3xl">
+              <h2 id="step1-title" data-step-heading tabIndex={-1} className="font-display text-[1.75rem] font-bold">
+                Your research plan
+              </h2>
+              <p className="mt-2 max-w-prose text-pencil">
+                Upload your plan as a PDF or Word file, or paste it below. Files are read on your computer. Nothing is uploaded
+                {AI_REVIEW ? " unless you use the optional AI review" : ""}.
+              </p>
 
-          <div
-            className={`sheet mt-1 ${dragging ? "outline-[3px] outline-dashed outline-offset-2 outline-[var(--focus)]" : ""}`}
-            onDragOver={(e) => {
-              if (e.dataTransfer.types.includes("Files")) {
-                e.preventDefault();
-                setDragging(true);
-              }
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => {
-              if (e.dataTransfer.files.length > 0) {
-                e.preventDefault();
-                setDragging(false);
-                readFile(e.dataTransfer.files[0]);
-              }
-            }}
-          >
-            {showMarks ? (
-              <div className="max-h-[70vh] overflow-y-auto">
-                <AnnotatedPlan
-                  plan={deferredPlan}
-                  findings={report?.findings ?? []}
-                  activeFinding={active}
-                  onSelect={selectFromPlan}
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <input
+                  id="plan-file"
+                  type="file"
+                  accept={ACCEPT}
+                  className="visually-hidden"
+                  onChange={(e) => {
+                    readFile(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
                 />
+                <label htmlFor="plan-file" className="btn cursor-pointer">
+                  Upload PDF or Word file
+                </label>
+                <span className="hidden text-sm text-pencil sm:inline">or drop the file on the box below</span>
               </div>
-            ) : (
-              <>
+              <p
+                className={`mt-2 min-h-[1.5em] max-w-prose text-sm ${fileState.kind === "error" ? "font-bold text-red-pen" : "text-pencil"}`}
+                role="status"
+                aria-live="polite"
+              >
+                {fileState.message}
+              </p>
+
+              <div
+                className={`sheet mt-1 ${dragging ? "outline-[3px] outline-dashed outline-offset-2 outline-[var(--focus)]" : ""}`}
+                onDragOver={(e) => {
+                  if (e.dataTransfer.types.includes("Files")) {
+                    e.preventDefault();
+                    setDragging(true);
+                  }
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={(e) => {
+                  if (e.dataTransfer.files.length > 0) {
+                    e.preventDefault();
+                    setDragging(false);
+                    readFile(e.dataTransfer.files[0]);
+                  }
+                }}
+              >
                 <label htmlFor="plan" className="visually-hidden">
-                  Paste your research plan
+                  Your research plan text
                 </label>
                 <textarea
                   id="plan"
-                  value={plan}
-                  onChange={(e) => setPlan(e.target.value)}
-                  placeholder="Paste your research plan here, drop a PDF or Word file, or load a sample below."
-                  rows={18}
+                  ref={textRef}
+                  value={state.plan}
+                  onChange={(e) => dispatch({ type: "setPlan", plan: e.target.value })}
+                  placeholder="Paste your research plan here, or drop a PDF or Word file on this box."
+                  rows={16}
                   spellCheck
-                  className="block min-h-[22rem] w-full resize-y border-0 bg-transparent px-5 py-5 text-[1.0625rem] leading-[1.85] text-ink outline-none placeholder:text-pencil focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--focus)]"
+                  className="block min-h-[20rem] w-full resize-y border-0 bg-transparent px-5 py-5 text-[1.0625rem] leading-[1.85] text-ink outline-none placeholder:text-pencil focus-visible:outline-[3px] focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--focus)]"
                 />
-              </>
-            )}
-          </div>
+              </div>
+              <p className="mt-2 text-right text-sm text-pencil">
+                {words.toLocaleString("en-US")} {words === 1 ? "word" : "words"}
+              </p>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" className="btn btn-solid" onClick={() => runCheck()} disabled={!plan.trim()}>
-              Check my plan
-            </button>
-            <button type="button" className="btn" onClick={clearAll} disabled={!plan && !checked}>
-              Clear
-            </button>
-            {checked ? (
-              <a href="#report" className="btn no-underline lg:hidden">
-                Go to my report
-              </a>
-            ) : null}
-          </div>
-
-          <div className="mt-6 border-t border-rule pt-4">
-            <p className="font-bold">No plan handy? Try a sample.</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {[WEAK_SAMPLE, STRONG_SAMPLE].map((s) => (
-                <button key={s.id} type="button" className="btn" onClick={() => loadSample(s)}>
-                  {s.label}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" className="btn btn-solid" onClick={() => go(2)} disabled={!hasPlan}>
+                  Continue
                 </button>
-              ))}
-            </div>
-            <p className="mt-2 max-w-prose text-sm text-pencil">Both samples are invented for this demo.</p>
-          </div>
+                {hasData(state) ? <ClearButton onClear={clearAll} /> : null}
+              </div>
+              {hasData(state) ? (
+                <p className="mt-2 max-w-prose text-sm text-pencil">Saved in this browser only, so your work is here when you come back.</p>
+              ) : null}
 
-          {showMarks ? (
-            <p className="mt-6 max-w-prose text-sm text-pencil">
-              Marks: <span className="mk mk-fix">red wavy line</span> is a fix,{" "}
-              <span className="mk mk-warn">highlighter</span> is something to check,{" "}
-              <span className="mk mk-verify">dashed pencil</span> is something to verify. Tap a mark to jump to its note.
-            </p>
+              <div className="mt-8 border-t border-rule pt-4">
+                <p className="font-bold">No plan handy? Try a sample.</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[WEAK_SAMPLE, STRONG_SAMPLE].map((s) => (
+                    <button key={s.id} type="button" className="btn" onClick={() => loadSample(s)}>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 max-w-prose text-sm text-pencil">Both samples are invented. Loading one replaces the text above.</p>
+              </div>
+            </section>
           ) : null}
-        </div>
 
-        <div className="mt-14">
-          <ProfilePicker profile={profile} detected={detected} onToggle={toggle} />
-        </div>
-
-        <div className="mt-14">
-          <DatesPanel
-            profile={profile}
-            dates={dates}
-            deadline={deadline}
-            onDate={(k, v) => {
-              setDates((d) => ({ ...d, [k]: v || undefined }));
-              if (k === "start" || k === "end") setFromPlan((o) => { const n = new Set(o); n.delete(k); return n; });
-            }}
-            onDeadline={(v) => {
-              setDeadline(v);
-              setFromPlan((o) => { const n = new Set(o); n.delete("deadline"); return n; });
-            }}
-            fromPlan={checked ? report?.planDates : undefined}
-          />
-        </div>
-      </div>
-
-      <div id="report" className="min-w-0 scroll-mt-4">
-        {checked && report ? (
-          <>
-            <div className="sheet px-5 py-6 sm:px-7">
-              <ReportView
-                report={report}
-                activeFinding={active}
-                onSelect={setActive}
-                onShowInPlan={showInPlan}
-              />
-              <div className="no-print mt-10 border-t border-rule pt-5">
-                <button type="button" className="btn" onClick={() => window.print()}>
-                  Print or save as PDF
+          {/* ------------------------------------------------ step 2: confirm */}
+          {step === 2 ? (
+            <section aria-labelledby="step2-title" className="mt-5">
+              <h2 id="step2-title" data-step-heading tabIndex={-1} className="font-display text-[1.75rem] font-bold">
+                Confirm the details
+              </h2>
+              <p className="mt-1 max-w-prose text-pencil">Two quick checks, so the report and the forms fit your project.</p>
+              <div className="flex flex-wrap items-center gap-x-4">
+                {fileState.kind === "done" ? <p className="text-pencil">{fileState.message}</p> : null}
+                <button type="button" className="link-btn" onClick={() => go(1)}>
+                  See or edit the text
                 </button>
               </div>
-            </div>
-            <div className="no-print mt-10">
-              <AiReview plan={plan} />
-            </div>
-          </>
-        ) : (
-          <div className="sheet px-5 py-8 sm:px-7">
-            <h2 className="font-display text-2xl font-bold">Your report appears here</h2>
-            <p className="mt-2 max-w-prose text-pencil">
-              Upload or paste your plan and press Check my plan. You will get the problems to fix first, the forms you probably need, and the order to sign them in.
-            </p>
-            <p className="mt-3 max-w-prose text-pencil">
-              Want to see it first? Load a sample on the left.
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
+
+              <div className="mt-5 grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                <ProfilePicker
+                  profile={profile}
+                  detected={detected}
+                  onChange={(key: keyof Profile, value: boolean) => dispatch({ type: "setTick", key, value })}
+                />
+                <DatesPanel
+                  profile={profile}
+                  dates={state.dates}
+                  deadline={state.deadline}
+                  onDate={(key, value) => dispatch({ type: "setDate", key, value })}
+                  onDeadline={(value) => dispatch({ type: "setDeadline", value })}
+                  fromPlan={report?.planDates}
+                />
+              </div>
+
+              {/* Pinned to the bottom of the screen, so every tick or date visibly changes the result. */}
+              <div className="sticky bottom-0 z-10 -mx-4 mt-8 border-t-2 border-ink bg-paper px-4 py-3 sm:-mx-6 sm:px-6">
+                <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                  <div className="min-w-0">
+                    <p className="hidden text-sm text-pencil sm:block">Your report so far</p>
+                    <p className="font-display text-lg font-bold leading-tight">{report ? <Summary counts={counts} /> : null}</p>
+                    {report && report.needed.length > 0 ? (
+                      <p className="hidden text-sm text-pencil sm:block">
+                        {report.needed.length} {report.needed.length === 1 ? "date is" : "dates are"} still needed from you. You can add them later.
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" className="btn" onClick={() => go(1)}>
+                      Back
+                    </button>
+                    <button type="button" className="btn btn-solid" onClick={() => go(3)}>
+                      See my report
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          ) : null}
+
+          {/* ------------------------------------------------ step 3: report */}
+          {step === 3 && report ? (
+            <section aria-labelledby="step3-title" className="mt-5">
+              <h2 id="step3-title" data-step-heading tabIndex={-1} className="visually-hidden">
+                Your report
+              </h2>
+
+              {wide ? (
+                <div className="grid grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] items-start gap-10">
+                  <div className="no-print min-w-0 pb-40">{planView}</div>
+                  <div
+                    ref={reportScrollRef}
+                    className="report-scroll sheet sticky top-4 max-h-[calc(100vh-2rem)] min-w-0 overflow-y-auto"
+                  >
+                    <ReportView {...reportProps} />
+                  </div>
+                </div>
+              ) : (
+                <div className="sheet -mx-1">
+                  <ReportView {...reportProps} planPanel={<div className="mt-4">{planView}</div>} />
+                </div>
+              )}
+
+              <FindingSheet
+                finding={sheetFinding}
+                marked={sheet !== null && marked.has(sheet)}
+                onClose={() => setSheet(null)}
+                onDismiss={() => {
+                  if (sheetFinding) dismiss(findingKey(sheetFinding));
+                }}
+                onSeeAll={() => {
+                  const i = sheet;
+                  setSheet(null);
+                  setTab("problems");
+                  if (i !== null && visible[i]) {
+                    setExpanded((prev) => new Set(prev).add(findingKey(visible[i])));
+                    requestAnimationFrame(() =>
+                      document.getElementById(`finding-${i}`)?.scrollIntoView({ block: "start", behavior: smooth() }),
+                    );
+                  }
+                }}
+              />
+            </section>
+          ) : null}
+        </div>
+      </main>
+    </>
   );
 }

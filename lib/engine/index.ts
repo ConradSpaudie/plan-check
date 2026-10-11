@@ -113,7 +113,10 @@ export function runChecks(input: CheckInput): Report {
     checkSessionLength(parsed),
   ];
 
-  const findings = sortFindings(outs.flatMap((o) => o.findings));
+  const all = sortFindings(outs.flatMap((o) => o.findings));
+  // Missing inputs are not problems with the plan, so they stay out of the counts.
+  const findings = all.filter((f) => !f.asks);
+  const needed = all.filter((f) => f.asks);
   const passes: PassItem[] = outs.flatMap((o) => o.passes);
   const counts = { fix: 0, warn: 0, verify: 0 };
   for (const f of findings) counts[f.severity]++;
@@ -122,6 +125,7 @@ export function runChecks(input: CheckInput): Report {
 
   return {
     findings,
+    needed,
     fixFirst,
     passes,
     formsNeeded: formsNeeded(input.profile),

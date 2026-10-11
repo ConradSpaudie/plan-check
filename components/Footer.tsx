@@ -18,22 +18,22 @@ export function Footer() {
           <p className="font-bold">Official sources</p>
           <ul className="mt-2 list-none space-y-1 p-0">
             <li>
-              <a className="underline" href={SRC.rulesAll.url} target="_blank" rel="noreferrer noopener">
+              <a className="tap-link underline" href={SRC.rulesAll.url} target="_blank" rel="noreferrer noopener">
                 ISEF International Rules
               </a>
             </li>
             <li>
-              <a className="underline" href={SRC.formsPage.url} target="_blank" rel="noreferrer noopener">
+              <a className="tap-link underline" href={SRC.formsPage.url} target="_blank" rel="noreferrer noopener">
                 ISEF forms
               </a>
             </li>
             <li>
-              <a className="underline" href={SRC.commonProblems.url} target="_blank" rel="noreferrer noopener">
+              <a className="tap-link underline" href={SRC.commonProblems.url} target="_blank" rel="noreferrer noopener">
                 Common problems the SRC finds
               </a>
             </li>
             <li>
-              <a className="underline" href={SRC.aiTable.url} target="_blank" rel="noreferrer noopener">
+              <a className="tap-link underline" href={SRC.aiTable.url} target="_blank" rel="noreferrer noopener">
                 ISEF rules on AI use
               </a>
             </li>
