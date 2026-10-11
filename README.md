@@ -29,6 +29,8 @@ Everything updates live: change the text, a tick or a date and the report follow
 
 The rule engine runs entirely in your browser. PDF and Word files are read on your own computer with pdf.js and mammoth, and your plan is never uploaded. Your plan, ticks and dates are saved in your own browser (localStorage) so they are there when you come back. **Clear my data** removes them.
 
+If the page itself hits an error, it sends a short error report (the error message, page, version and browser) so problems are noticed quickly. Reports never include your plan, file names or dates. Anyone can also use **Report a problem** in the footer, which opens an email.
+
 The optional AI review is the only thing that would send your plan anywhere (to Claude through the Vercel AI Gateway). It is hidden unless the site owner turns it on, and even then it is off until you tick a consent box. It only asks questions tied to exact sentences in your plan and never writes or rewrites text, because ISEF does not allow generative AI to write the plan. It produces an AI-use log you can copy for Form 2A. ISEF allows AI feedback on your own finished draft when you disclose it, but some fairs and teachers are stricter, so ask yours first.
 
 ## Honest limits
@@ -44,11 +46,19 @@ The optional AI review is the only thing that would send your plan anywhere (to 
 npm install
 npm run dev        # http://localhost:3000
 npm test           # dates, sections, bibliography, detection, PDF reading, app state, real plans
+npm run build && npm run e2e   # end-to-end checks in Chromium at desktop and phone size, with accessibility scans
+npm run e2e:live   # the same checks against the live site
 npm run preflight  # typecheck, lint, tests, README and placeholder checks
 npm run preflight -- --url https://your-deployment.vercel.app
 ```
 
 The AI review panel is hidden by default. To show it, set `NEXT_PUBLIC_AI_REVIEW=1` (Vercel: Settings, Environment Variables, then redeploy). It needs the Vercel AI Gateway with credits on the account: on Vercel it authenticates automatically, and locally you set `AI_GATEWAY_API_KEY`. Set `DEMO_MODE=1` to return a canned review with no model call.
+
+The first time you run the end-to-end checks, install the browser with `npx playwright install chromium`.
+
+## Releasing
+
+Every push to `main` deploys to Vercel. GitHub Actions runs every check on each push, checks the live site after each deploy and every morning, and opens an issue if the live site breaks. See [RELEASING.md](RELEASING.md) for the release bar, monitoring and how to roll back.
 
 ## How it is built
 

@@ -1,0 +1,44 @@
+# Checks the real site after every production deploy and once a day.
+# If anything fails, it opens a GitHub issue, which GitHub emails to you.
+name: Live site check
+
+on:
+  deployment_status:
+  schedule:
+    - cron: "17 14 * * *" # every day, 7:17 am Pacific
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PLAN_CHECK_URL: https://isef-plan-check.vercel.app
+      CI: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run the end-to-end checks against the live site
+        run: npx playwright test
+      - name: Open an issue if the live site is broken
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "Live site check failed ($(date -u +%Y-%m-%d))" \
+            --body "The end-to-end checks failed against $PLAN_CHECK_URL. Details: $RUN_URL. If a deploy caused it, roll back first (see RELEASING.md), then fix."

@@ -14,6 +14,7 @@ import { annotate } from "@/lib/annotate";
 import { detectFromPlan, runChecks, type Finding, type Profile, type Severity } from "@/lib/engine";
 import { words as countWords } from "@/lib/engine/text";
 import { ACCEPT, ExtractError, extractPlanText } from "@/lib/extract";
+import { reportError, reportLink } from "@/lib/report";
 import { STRONG_SAMPLE, WEAK_SAMPLE, type Sample } from "@/lib/samples";
 import {
   STORAGE_KEY,
@@ -198,6 +199,11 @@ export function PlanCheckApp() {
       });
       setScrollReq((n) => n + 1);
     } catch (e) {
+      // Expected problems (a scan, a password) are explained to the student. Anything else is a bug worth knowing about.
+      if (!(e instanceof ExtractError)) {
+        const ext = file.name.includes(".") ? file.name.split(".").pop()!.toLowerCase().slice(0, 8) : "none";
+        reportError("file-read", e, { type: ext, kb: Math.round(file.size / 1024) });
+      }
       setFileState({
         kind: "error",
         message: e instanceof ExtractError ? e.message : `${file.name} could not be read. Paste the text instead.`,
@@ -349,6 +355,13 @@ export function PlanCheckApp() {
       </div>
       <p className="mt-2 max-w-prose text-sm text-pencil">
         Your plan, ticks and dates are saved in this browser only, so they are here when you come back. Clear my data removes them.
+      </p>
+      <p className="mt-2 max-w-prose text-sm text-pencil">
+        A note looks wrong?{" "}
+        <a className="tap-link font-bold text-ink underline" href={reportLink("A finding in my report looks wrong. The finding says:")}>
+          Report it
+        </a>
+        . Your plan is not sent.
       </p>
       {AI_REVIEW ? (
         <div className="mt-10">

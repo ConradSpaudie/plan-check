@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Copied from pdfjs-dist at build time, not our code.
     "public/pdf.worker*.mjs",
+    // Playwright output.
+    "test-results/**",
+    "playwright-report/**",
   ]),
 ]);
 

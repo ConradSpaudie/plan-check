@@ -1,4 +1,5 @@
 import { SRC } from "@/lib/engine/sources";
+import { VERSION, reportLink } from "@/lib/report";
 
 export function Footer() {
   return (
@@ -13,6 +14,13 @@ export function Footer() {
             Rules last checked in October 2026 against the ISEF 2026-27 International Rules and the 2027 forms.
           </p>
           <p className="text-pencil">Built by Conrad Spaudie, a student who went through this.</p>
+          <p>
+            Something wrong or confusing?{" "}
+            <a className="tap-link font-bold underline" href={reportLink()}>
+              Report a problem
+            </a>
+            <span className="text-pencil">. Version {VERSION}.</span>
+          </p>
         </div>
         <div>
           <p className="font-bold">Official sources</p>
