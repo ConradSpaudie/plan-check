@@ -53,6 +53,6 @@ Do this on your phone and on your laptop after a release that changes what stude
 
 | Release (commit) | Date | Owner walk-through | Independent review | Notes |
 | --- | --- | --- | --- | --- |
-| 8900f06 + monitoring | | Not yet | Claude code review (not independent of the builder) | |
+| 59187bb | 2026-10-11 | Done on laptop and phone, no problems | Waiting on teacher review | |
 
 Ask one science teacher or SRC member to run a real plan through the site and say which findings were wrong or missing. Record who and what they found here.
